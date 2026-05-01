@@ -12,6 +12,7 @@ import {
   Plus, 
   Trash2, 
   Search, 
+  X,
   History, 
   DollarSign,
   Wrench,
@@ -37,6 +38,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<Language>('bn');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'vehicles' | 'dealers' | 'expenses'>('dashboard');
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const t = translations[lang];
 
@@ -86,8 +88,39 @@ export default function App() {
           </div>
           <h1 className="text-3xl font-bold text-ink mb-2">{t.appName}</h1>
           <p className="text-gray-500 mb-8">{t.welcome}</p>
+          
+          <AnimatePresence>
+            {loginError && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4 p-4 bg-red-50 text-red-600 text-sm rounded-2xl flex items-center gap-2 border border-red-100"
+              >
+                <div className="shrink-0 p-1 bg-red-100 rounded-full">
+                  <X size={14} />
+                </div>
+                <p className="font-medium text-left">
+                  {loginError}
+                  {loginError.includes('auth/unauthorized-domain') && (
+                    <span className="block mt-1 text-[10px] opacity-80">
+                      (Hint: Add this domain to Authorized Domains in Firebase Console)
+                    </span>
+                  )}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <button 
-            onClick={signInWithGoogle}
+            onClick={async () => {
+              setLoginError(null);
+              try {
+                await signInWithGoogle();
+              } catch (err: any) {
+                setLoginError(err.message || "Login failed. Please try again.");
+              }
+            }}
             className="w-full flex items-center justify-center gap-3 bg-ink text-white py-4 rounded-2xl font-medium hover:bg-black transition-colors"
           >
             <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />

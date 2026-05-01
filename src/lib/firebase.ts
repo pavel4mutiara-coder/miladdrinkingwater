@@ -8,7 +8,14 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const signInWithGoogle = async () => {
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    console.error("Google Sign-In Error:", error);
+    throw error;
+  }
+};
 export const logout = () => signOut(auth);
 
 // Test connection
