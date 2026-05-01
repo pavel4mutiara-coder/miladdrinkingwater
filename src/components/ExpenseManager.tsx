@@ -11,7 +11,8 @@ import {
   FileText,
   TrendingDown,
   X,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react';
 import { CompanyExpense, ExpenseCategory } from '../types';
 import { translations, Language } from '../locales';
@@ -22,6 +23,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [isManagingCategories, setIsManagingCategories] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
   const [newExpense, setNewExpense] = useState({ 
     date: new Date().toISOString().split('T')[0], 
     category: '', 
@@ -76,6 +78,10 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
 
   const totalExpense = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
+  const filteredExpenses = expenses.filter(exp => 
+    exp.category.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 lg:space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -101,7 +107,17 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
             {t.addExpense}
           </h2>
           <button 
-            onClick={() => setShowAdd(!showAdd)}
+            onClick={() => {
+              const becomingVisible = !showAdd;
+              setShowAdd(becomingVisible);
+              if (becomingVisible && categorySearch) {
+                // Check if the search matches an existing category
+                const matched = categories.find(c => c.name.toLowerCase() === categorySearch.toLowerCase());
+                if (matched) {
+                  setNewExpense(prev => ({ ...prev, category: matched.name }));
+                }
+              }
+            }}
             className={`p-2 lg:p-3 rounded-xl lg:rounded-2xl transition-all ${showAdd ? 'bg-ink text-white rotate-45' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
           >
             <Plus size={20} className="lg:w-6 lg:h-6" />
@@ -118,7 +134,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
             >
               <form onSubmit={handleSubmit} className="p-4 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                 <div className="space-y-4">
-                   <div className="space-y-1.5">
+                    <div className="space-y-1.5">
                       <label className="text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.date}</label>
                       <input 
                         type="date" 
@@ -139,15 +155,19 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
                           {lang === 'bn' ? 'ম্যানেজ করুন' : 'Manage'}
                         </button>
                       </div>
-                      <select 
-                        required
-                        value={newExpense.category} 
-                        onChange={e => setNewExpense({...newExpense, category: e.target.value})} 
-                        className="w-full px-4 py-2 lg:py-3 bg-white border border-gray-100 rounded-xl lg:rounded-2xl text-sm"
-                      >
-                        {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                        {categories.length === 0 && <option value="">{lang === 'bn' ? 'প্রথমে ক্যাটেগরি যোগ করুন' : 'Add category first'}</option>}
-                      </select>
+                      <div className="relative">
+                        <select 
+                          required
+                          value={newExpense.category} 
+                          onChange={e => setNewExpense({...newExpense, category: e.target.value})} 
+                          className="w-full px-4 py-2 lg:py-3 bg-white border border-gray-100 rounded-xl lg:rounded-2xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                        >
+                          <option value="" disabled>{lang === 'bn' ? 'নির্বাচন করুন' : 'Select Category'}</option>
+                          {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                          {categories.length === 0 && <option value="" disabled>{lang === 'bn' ? 'প্রথমে ক্যাটেগরি যোগ করুন' : 'No categories available'}</option>}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                      </div>
                    </div>
                 </div>
                 <div className="space-y-4">
@@ -187,14 +207,28 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
             <thead>
               <tr className="text-left bg-gray-50/50">
                 <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest">{t.date}</th>
-                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest">{t.category}</th>
+                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest min-w-[140px]">
+                  <div className="flex flex-col gap-2">
+                    <span>{t.category}</span>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={12} />
+                      <input 
+                        type="text"
+                        placeholder={lang === 'bn' ? "খুঁজুন..." : "Filter..."}
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        className="w-full pl-6 pr-2 py-1 bg-white border border-gray-100 rounded-lg text-[10px] lowercase focus:outline-none focus:ring-1 focus:ring-blue-500 font-normal normal-case"
+                      />
+                    </div>
+                  </div>
+                </th>
                 <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest">{t.description}</th>
                 <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t.amount} (৳)</th>
                 <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {expenses.map(exp => (
+              {filteredExpenses.map(exp => (
                 <tr key={exp.id} className="group hover:bg-gray-50/30 transition-colors">
                   <td className="px-4 lg:px-8 py-4 lg:py-5 text-[10px] lg:text-sm font-medium text-gray-400">{exp.date}</td>
                   <td className="px-4 lg:px-8 py-4 lg:py-5">
@@ -211,9 +245,12 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
               ))}
             </tbody>
           </table>
-          {expenses.length === 0 && (
+          {filteredExpenses.length === 0 && (
             <div className="p-16 lg:p-20 text-center text-gray-400 italic text-sm">
-               {lang === 'bn' ? 'কোন খরচের রেকর্ড খুঁজে পাওয়া যায়নি' : 'No expense records found'}
+               {categorySearch 
+                 ? (lang === 'bn' ? 'কোন ফলাফল পাওয়া যায়নি' : 'No matching records found')
+                 : (lang === 'bn' ? 'কোন খরচের রেকর্ড খুঁজে পাওয়া যায়নি' : 'No expense records found')
+               }
             </div>
           )}
         </div>
