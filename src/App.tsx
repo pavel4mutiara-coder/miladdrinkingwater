@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { auth, signInWithGoogle, logout, db, handleFirestoreError, OperationType } from './lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { db, handleFirestoreError, OperationType, loginAnonymously, logout, auth } from './lib/firebase';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, Timestamp, orderBy, where } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -34,23 +33,87 @@ import DealerManager from './components/DealerManager';
 import ExpenseManager from './components/ExpenseManager';
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<{ displayName: string; photoURL: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<Language>('bn');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'vehicles' | 'dealers' | 'expenses'>('dashboard');
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
   const t = translations[lang];
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    // Initial sync from localStorage
+    const savedUser = localStorage.getItem('milad_water_user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+
+    // Ensure Firebase is also synced for database access
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      if (u) {
+        // Firebase has a session
+        if (!localStorage.getItem('milad_water_user')) {
+          const userData = { 
+            displayName: 'Admin Account', 
+            photoURL: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff' 
+          };
+          setUser(userData);
+          localStorage.setItem('milad_water_user', JSON.stringify(userData));
+        }
+      } else {
+        // Firebase no session
+        setUser(null);
+        localStorage.removeItem('milad_water_user');
+      }
       setLoading(false);
     });
+
     return () => unsubscribe();
   }, []);
 
   const toggleLang = () => setLang(prev => prev === 'bn' ? 'en' : 'bn');
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setIsLoggingIn(true);
+    
+    // Hardcoded credentials check
+    const performLogin = async () => {
+      if (username === 'admin' && password === 'Milad2006') {
+        try {
+          await loginAnonymously();
+          const userData = { 
+            displayName: 'Admin Account', 
+            photoURL: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff' 
+          };
+          setUser(userData);
+          localStorage.setItem('milad_water_user', JSON.stringify(userData));
+        } catch (err: any) {
+          setLoginError(lang === 'bn' ? 'ডাটাবেস কানেকশন ত্রুটি!' : 'Database connection error!');
+        }
+      } else {
+        setLoginError(lang === 'bn' ? 'ইউজারনেম বা পাসওয়ার্ড ভুল!' : 'Invalid username or password!');
+      }
+      setIsLoggingIn(false);
+    };
+
+    performLogin();
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUser(null);
+      localStorage.removeItem('milad_water_user');
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -112,20 +175,41 @@ export default function App() {
             )}
           </AnimatePresence>
 
-          <button 
-            onClick={async () => {
-              setLoginError(null);
-              try {
-                await signInWithGoogle();
-              } catch (err: any) {
-                setLoginError(err.message || "Login failed. Please try again.");
-              }
-            }}
-            className="w-full flex items-center justify-center gap-3 bg-ink text-white py-4 rounded-2xl font-medium hover:bg-black transition-colors"
-          >
-            <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
-            {t.googleLogin}
-          </button>
+          <form onSubmit={handleLogin} className="space-y-4 w-full">
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'bn' ? 'ইউজারনেম' : 'Username'}</label>
+              <input 
+                type="text" 
+                required
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder="admin"
+              />
+            </div>
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{lang === 'bn' ? 'পাসওয়ার্ড' : 'Password'}</label>
+              <input 
+                type="password" 
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button 
+              disabled={isLoggingIn}
+              type="submit"
+              className={`w-full flex items-center justify-center gap-3 bg-ink text-white py-4 rounded-2xl font-medium transition-all ${isLoggingIn ? 'opacity-70 cursor-not-allowed' : 'hover:bg-black shadow-lg shadow-black/10'}`}
+            >
+              {isLoggingIn ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : null}
+              {isLoggingIn ? (lang === 'bn' ? 'অপেক্ষা করুন...' : 'Please wait...') : (lang === 'bn' ? 'লগইন করুন' : 'Login')}
+            </button>
+          </form>
           <p className="mt-4 text-xs text-gray-400">{t.address}</p>
         </motion.div>
       </div>
@@ -183,11 +267,11 @@ export default function App() {
             <img src={user.photoURL || ''} className="w-8 h-8 rounded-full" alt="User" />
             <div className="overflow-hidden">
               <p className="text-sm font-medium text-ink truncate">{user.displayName}</p>
-              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              <p className="text-xs text-gray-400 truncate">Milad Drinking Water</p>
             </div>
           </div>
           <button 
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full flex items-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
           >
             <LogOut size={16} /> {t.logout}
@@ -207,7 +291,7 @@ export default function App() {
             <button onClick={toggleLang} className="text-gray-400">
               <Languages size={20} />
             </button>
-            <button onClick={logout} className="text-gray-400">
+            <button onClick={handleLogout} className="text-gray-400">
               <LogOut size={20} />
             </button>
           </div>
