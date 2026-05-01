@@ -53,3 +53,9 @@ export interface CompanyExpense {
   amount: number;
   createdAt: Timestamp;
 }
+
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  createdAt: Timestamp;
+}

@@ -20,9 +20,11 @@ import {
   Phone,
   BarChart3,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  Languages
 } from 'lucide-react';
 import { Vehicle, Maintenance, VehicleIncome, Dealer, WaterSale, CompanyExpense } from './types';
+import { translations, Language } from './locales';
 
 // --- Sub-components (Drafts) ---
 import Dashboard from './components/Dashboard';
@@ -33,7 +35,10 @@ import ExpenseManager from './components/ExpenseManager';
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState<Language>('bn');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'vehicles' | 'dealers' | 'expenses'>('dashboard');
+
+  const t = translations[lang];
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -43,6 +48,8 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  const toggleLang = () => setLang(prev => prev === 'bn' ? 'en' : 'bn');
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-bg-warm">
@@ -51,7 +58,7 @@ export default function App() {
           transition={{ repeat: Infinity, duration: 2 }}
           className="text-ink font-semibold"
         >
-          Loading...
+          {t.loading}
         </motion.div>
       </div>
     );
@@ -65,21 +72,28 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl text-center"
         >
-          <div className="mb-6 flex justify-center">
+          <div className="mb-6 flex justify-center flex-col items-center gap-4">
             <div className="p-4 bg-blue-50 rounded-full">
               <Droplets className="w-12 h-12 text-blue-600" />
             </div>
+            <button 
+              onClick={toggleLang}
+              className="px-4 py-2 bg-gray-50 rounded-full text-xs font-bold border border-gray-100 flex items-center gap-2"
+            >
+              <Languages size={14} />
+              {lang === 'bn' ? 'English' : 'বাংলা'}
+            </button>
           </div>
-          <h1 className="text-3xl font-bold text-ink mb-2">মিলাদ ড্রিংকিং ওয়াটার</h1>
-          <p className="text-gray-500 mb-8">ম্যানেজমেন্ট সিস্টেমে স্বাগতম</p>
+          <h1 className="text-3xl font-bold text-ink mb-2">{t.appName}</h1>
+          <p className="text-gray-500 mb-8">{t.welcome}</p>
           <button 
             onClick={signInWithGoogle}
             className="w-full flex items-center justify-center gap-3 bg-ink text-white py-4 rounded-2xl font-medium hover:bg-black transition-colors"
           >
             <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
-            Google দিয়ে লগইন করুন
+            {t.googleLogin}
           </button>
-          <p className="mt-4 text-xs text-gray-400">মিরবক্সটুলা ১ নম্বর গলি, সিলেট</p>
+          <p className="mt-4 text-xs text-gray-400">{t.address}</p>
         </motion.div>
       </div>
     );
@@ -100,31 +114,39 @@ export default function App() {
               active={activeTab === 'dashboard'} 
               onClick={() => setActiveTab('dashboard')} 
               icon={<LayoutDashboard size={20} />} 
-              label="ড্যাশবোর্ড" 
+              label={t.dashboard} 
             />
             <NavItem 
               active={activeTab === 'vehicles'} 
               onClick={() => setActiveTab('vehicles')} 
               icon={<Truck size={20} />} 
-              label="গাড়ি ব্যবস্থাপনা" 
+              label={t.vehicles} 
             />
             <NavItem 
               active={activeTab === 'dealers'} 
               onClick={() => setActiveTab('dealers')} 
               icon={<Users size={20} />} 
-              label="ডিলার ব্যবস্থাপনা" 
+              label={t.dealers} 
             />
             <NavItem 
               active={activeTab === 'expenses'} 
               onClick={() => setActiveTab('expenses')} 
               icon={<DollarSign size={20} />} 
-              label="কোম্পানির খরচ" 
+              label={t.expenses} 
             />
           </nav>
         </div>
         
-        <div className="mt-auto p-6 border-t border-gray-50">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="mt-auto p-6 border-t border-gray-50 flex flex-col gap-4">
+          <button 
+            onClick={toggleLang}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-ink font-medium transition-colors"
+          >
+            <Languages size={18} />
+            {lang === 'bn' ? 'Switch to English' : 'বাংলায় দেখুন'}
+          </button>
+          
+          <div className="flex items-center gap-3">
             <img src={user.photoURL || ''} className="w-8 h-8 rounded-full" alt="User" />
             <div className="overflow-hidden">
               <p className="text-sm font-medium text-ink truncate">{user.displayName}</p>
@@ -135,7 +157,7 @@ export default function App() {
             onClick={logout}
             className="w-full flex items-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors"
           >
-            <LogOut size={16} /> লগআউট করুন
+            <LogOut size={16} /> {t.logout}
           </button>
         </div>
       </aside>
@@ -148,13 +170,18 @@ export default function App() {
             <Droplets className="text-blue-600 w-6 h-6" />
             <span className="font-bold text-lg">Milad Water</span>
           </div>
-          <button onClick={logout} className="text-gray-400">
-            <LogOut size={20} />
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={toggleLang} className="text-gray-400">
+              <Languages size={20} />
+            </button>
+            <button onClick={logout} className="text-gray-400">
+              <LogOut size={20} />
+            </button>
+          </div>
         </header>
 
         {/* Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-10 pb-24 lg:pb-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -163,20 +190,20 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              {activeTab === 'dashboard' && <Dashboard />}
-              {activeTab === 'vehicles' && <VehicleManager />}
-              {activeTab === 'dealers' && <DealerManager />}
-              {activeTab === 'expenses' && <ExpenseManager />}
+              {activeTab === 'dashboard' && <Dashboard lang={lang} />}
+              {activeTab === 'vehicles' && <VehicleManager lang={lang} />}
+              {activeTab === 'dealers' && <DealerManager lang={lang} />}
+              {activeTab === 'expenses' && <ExpenseManager lang={lang} />}
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Mobile Nav */}
-        <nav className="lg:hidden bg-white border-t border-gray-100 px-6 py-3 flex justify-between">
-           <MobileNavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={20} />} />
-           <MobileNavItem active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Truck size={20} />} />
-           <MobileNavItem active={activeTab === 'dealers'} onClick={() => setActiveTab('dealers')} icon={<Users size={20} />} />
-           <MobileNavItem active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} icon={<DollarSign size={20} />} />
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-gray-100 px-6 py-3 flex justify-between z-40">
+           <MobileNavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={24} />} />
+           <MobileNavItem active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Truck size={24} />} />
+           <MobileNavItem active={activeTab === 'dealers'} onClick={() => setActiveTab('dealers')} icon={<Users size={24} />} />
+           <MobileNavItem active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} icon={<DollarSign size={24} />} />
         </nav>
       </main>
     </div>
@@ -202,9 +229,10 @@ function MobileNavItem({ active, onClick, icon }: { active: boolean, onClick: ()
   return (
     <button 
       onClick={onClick}
-      className={`p-2 rounded-xl ${active ? 'text-blue-600 bg-blue-50' : 'text-gray-400'}`}
+      className={`p-3 rounded-2xl transition-all ${active ? 'text-blue-600 bg-blue-50 shadow-sm' : 'text-gray-400'}`}
     >
       {icon}
     </button>
   );
 }
+

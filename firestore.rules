@@ -80,6 +80,12 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidExpenseCategory(data) {
+      return data.keys().hasAll(['name', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.createdAt is timestamp;
+    }
+
     // --- Rules ---
 
     match /vehicles/{vehicleId} {
@@ -121,6 +127,13 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isAdmin() && isValidCompanyExpense(incoming()) && isValidId(expId);
       allow update: if isAdmin() && isValidCompanyExpense(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /expense_categories/{catId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidExpenseCategory(incoming()) && isValidId(catId);
+      allow update: if isAdmin() && isValidExpenseCategory(incoming());
       allow delete: if isAdmin();
     }
   }

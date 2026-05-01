@@ -83,6 +83,17 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["date", "category", "amount", "createdAt"]
+    },
+    "ExpenseCategory": {
+      "title": "Expense Category",
+      "description": "Categories for company expenses",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "createdAt"]
     }
   },
   "firestore": {
@@ -109,6 +120,10 @@
     "company_expenses": {
       "schema": "CompanyExpense",
       "description": "General business expenses"
+    },
+    "expense_categories": {
+      "schema": "ExpenseCategory",
+      "description": "Custom categories for business expenses"
     }
   }
 }
