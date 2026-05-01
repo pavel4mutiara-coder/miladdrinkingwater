@@ -1,0 +1,127 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerified() && request.auth.token.email == 'ahmedhussainpavel@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidVehicle(data) {
+      return data.keys().hasAll(['vehicleNumber', 'createdAt']) &&
+             data.vehicleNumber is string && data.vehicleNumber.size() > 0 && data.vehicleNumber.size() <= 50 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidMaintenance(data) {
+      return data.keys().hasAll(['vehicleId', 'date', 'description', 'createdAt']) &&
+             data.vehicleId is string && data.vehicleId.size() <= 128 &&
+             data.date is string && data.date.size() <= 20 &&
+             data.description is string && data.description.size() <= 1000 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidVehicleIncome(data) {
+      return data.keys().hasAll(['vehicleId', 'date', 'amount', 'createdAt']) &&
+             data.vehicleId is string && data.vehicleId.size() <= 128 &&
+             data.date is string && data.date.size() <= 20 &&
+             data.amount is number &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidDealer(data) {
+      return data.keys().hasAll(['name', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidWaterSale(data) {
+      return data.keys().hasAll(['dealerId', 'date', 'productType', 'quantity', 'rate', 'totalAmount', 'createdAt']) &&
+             data.dealerId is string && data.dealerId.size() <= 128 &&
+             data.date is string && data.date.size() <= 20 &&
+             data.productType in ['20L Jar', '5L Bottle', 'Other'] &&
+             data.quantity is number &&
+             data.rate is number &&
+             data.totalAmount is number &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidCompanyExpense(data) {
+      return data.keys().hasAll(['date', 'category', 'amount', 'createdAt']) &&
+             data.date is string && data.date.size() <= 20 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.amount is number &&
+             data.createdAt is timestamp;
+    }
+
+    // --- Rules ---
+
+    match /vehicles/{vehicleId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidVehicle(incoming()) && isValidId(vehicleId);
+      allow update: if isAdmin() && isValidVehicle(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /maintenance/{mainId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidMaintenance(incoming()) && isValidId(mainId);
+      allow update: if isAdmin() && isValidMaintenance(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /vehicle_income/{incomeId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidVehicleIncome(incoming()) && isValidId(incomeId);
+      allow update: if isAdmin() && isValidVehicleIncome(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /dealers/{dealerId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidDealer(incoming()) && isValidId(dealerId);
+      allow update: if isAdmin() && isValidDealer(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /water_sales/{saleId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidWaterSale(incoming()) && isValidId(saleId);
+      allow update: if isAdmin() && isValidWaterSale(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /company_expenses/{expId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidCompanyExpense(incoming()) && isValidId(expId);
+      allow update: if isAdmin() && isValidCompanyExpense(incoming());
+      allow delete: if isAdmin();
+    }
+  }
+}
