@@ -77,32 +77,36 @@ export default function App() {
 
   const toggleLang = () => setLang(prev => prev === 'bn' ? 'en' : 'bn');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
     setIsLoggingIn(true);
     
-    // Hardcoded credentials check
-    const performLogin = async () => {
-      if (username === 'admin' && password === 'Milad2006') {
-        try {
-          await loginAnonymously();
-          const userData = { 
-            displayName: 'Admin Account', 
-            photoURL: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff' 
-          };
-          setUser(userData);
-          localStorage.setItem('milad_water_user', JSON.stringify(userData));
-        } catch (err: any) {
-          setLoginError(lang === 'bn' ? 'ডাটাবেস কানেকশন ত্রুটি!' : 'Database connection error!');
+    if (username === 'admin' && password === 'Milad2006') {
+      try {
+        await loginAnonymously();
+        const userData = { 
+          displayName: 'Admin Account', 
+          photoURL: 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff' 
+        };
+        setUser(userData);
+        localStorage.setItem('milad_water_user', JSON.stringify(userData));
+      } catch (err: any) {
+        console.error("Firebase Login Error:", err);
+        if (err.code === 'auth/operation-not-allowed') {
+          setLoginError(lang === 'bn' 
+            ? 'Firebase Console-এ "Anonymous Sign-in" সচল করা নেই।' 
+            : 'Anonymous sign-in is not enabled in Firebase Console.');
+        } else {
+          setLoginError(lang === 'bn' 
+            ? `ডাটাবেস কানেকশন ত্রুটি! (${err.code || 'unknown'})` 
+            : `Database error! (${err.code || 'unknown'})`);
         }
-      } else {
-        setLoginError(lang === 'bn' ? 'ইউজারনেম বা পাসওয়ার্ড ভুল!' : 'Invalid username or password!');
       }
-      setIsLoggingIn(false);
-    };
-
-    performLogin();
+    } else {
+      setLoginError(lang === 'bn' ? 'ইউজারনেম বা পাসওয়ার্ড ভুল!' : 'Invalid username or password!');
+    }
+    setIsLoggingIn(false);
   };
 
   const handleLogout = async () => {
