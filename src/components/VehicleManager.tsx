@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, deleteDoc, doc, Timestamp, orderBy, where, serverTimestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, Timestamp, orderBy, where, serverTimestamp } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Truck, 
   Plus, 
   Trash2, 
+  Edit2,
   History, 
   DollarSign,
   Wrench,
@@ -35,6 +36,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isAddingVehicle, setIsAddingVehicle] = useState(false);
+  const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [newVehicle, setNewVehicle] = useState({ vehicleNumber: '', name: '', type: '' });
 
@@ -50,19 +52,33 @@ export default function VehicleManager({ lang }: { lang: Language }) {
     e.preventDefault();
     if (!newVehicle.vehicleNumber) return;
     try {
-      await addDoc(collection(db, 'vehicles'), {
-        ...newVehicle,
-        createdAt: serverTimestamp()
-      });
+      if (editingVehicleId) {
+        await updateDoc(doc(db, 'vehicles', editingVehicleId), {
+          ...newVehicle,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        await addDoc(collection(db, 'vehicles'), {
+          ...newVehicle,
+          createdAt: serverTimestamp()
+        });
+      }
       setNewVehicle({ vehicleNumber: '', name: '', type: '' });
       setIsAddingVehicle(false);
+      setEditingVehicleId(null);
     } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, 'vehicles');
+      handleFirestoreError(err, editingVehicleId ? OperationType.UPDATE : OperationType.CREATE, 'vehicles');
     }
   };
 
+  const handleEditVehicle = (v: Vehicle) => {
+    setNewVehicle({ vehicleNumber: v.vehicleNumber, name: v.name, type: v.type });
+    setEditingVehicleId(v.id);
+    setIsAddingVehicle(true);
+  };
+
   const handleDeleteVehicle = async (id: string) => {
-    if (!window.confirm(t.deleteVehicleConfirm)) return;
+    if (!confirm(t.deleteVehicleConfirm)) return;
     try {
       await deleteDoc(doc(db, 'vehicles', id));
       if (selectedVehicle?.id === id) setSelectedVehicle(null);
@@ -118,12 +134,20 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                 <div className={`px-2 py-1 ${selectedVehicle?.id === v.id ? 'bg-white/20 text-white' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'} rounded text-[10px] font-black uppercase tracking-tighter`}>
                   {v.vehicleNumber}
                 </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleDeleteVehicle(v.id); }}
-                  className={`${selectedVehicle?.id === v.id ? 'text-white/50 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-red-500'}`}
-                >
-                  <Trash2 size={14} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleEditVehicle(v); }}
+                    className={`${selectedVehicle?.id === v.id ? 'text-white/50 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-blue-500'}`}
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleDeleteVehicle(v.id); }}
+                    className={`${selectedVehicle?.id === v.id ? 'text-white/50 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-red-500'}`}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
               <p className="font-bold dark:text-white">{v.name}</p>
               <p className={`text-xs ${selectedVehicle?.id === v.id ? 'text-white/60' : 'text-gray-400 dark:text-dark-muted'}`}>{v.type}</p>
@@ -172,6 +196,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   vehicleId={selectedVehicle.id} 
                   collectionName="maintenance"
                   lang={lang}
+                  noDataMessage={t.noMaintenanceRecord}
                   fields={[
                     { name: 'date', label: t.date, type: 'date' },
                     { name: 'partsReplaced', label: t.parts, type: 'text' },
@@ -185,6 +210,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   vehicleId={selectedVehicle.id} 
                   collectionName="vehicle_income"
                   lang={lang}
+                  noDataMessage={t.noIncomeRecord}
                   fields={[
                     { name: 'date', label: t.date, type: 'date' },
                     { name: 'amount', label: t.amount, type: 'number' }
@@ -206,12 +232,18 @@ export default function VehicleManager({ lang }: { lang: Language }) {
               className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative"
             >
               <button 
-                onClick={() => setIsAddingVehicle(false)}
+                onClick={() => {
+                  setIsAddingVehicle(false);
+                  setEditingVehicleId(null);
+                  setNewVehicle({ vehicleNumber: '', name: '', type: '' });
+                }}
                 className="absolute top-6 right-6 text-gray-400 hover:text-ink"
               >
                 <X />
               </button>
-              <h2 className="text-2xl font-bold mb-6 text-ink">{t.addVehicle}</h2>
+              <h2 className="text-2xl font-bold mb-6 text-ink">
+                {editingVehicleId ? t.editVehicle : t.addVehicle}
+              </h2>
               <form onSubmit={handleAddVehicle} className="space-y-4">
                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.vehicleNumber}</label>
@@ -246,7 +278,9 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                       placeholder="e.g. Mini Truck"
                     />
                  </div>
-                 <button className="w-full bg-ink text-white py-4 rounded-2xl font-bold hover:bg-black transition-colors">{t.save}</button>
+                 <button className="w-full bg-ink text-white py-4 rounded-2xl font-bold hover:bg-black transition-colors uppercase tracking-widest">
+                   {editingVehicleId ? t.update : t.save}
+                 </button>
               </form>
             </motion.div>
           </div>
@@ -398,7 +432,7 @@ function VehicleSummary({ vehicleId, lang }: { vehicleId: string, lang: Language
   );
 }
 
-function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lang }: { title: string, icon: React.ReactNode, vehicleId: string, collectionName: string, fields: any[], lang: Language }) {
+function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lang, noDataMessage }: { title: string, icon: React.ReactNode, vehicleId: string, collectionName: string, fields: any[], lang: Language, noDataMessage?: string }) {
   const t = translations[lang];
   const [logs, setLogs] = useState<any[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -470,7 +504,7 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
             }}
             className={`p-2 rounded-xl transition-all ${showAdd ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-500'}`}
           >
-            <Plus size={18} />
+            {showAdd ? <X size={18} /> : <Plus size={18} />}
           </button>
         </div>
       </div>
@@ -531,7 +565,7 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
             ))}
           </tbody>
         </table>
-        {filteredLogs.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic text-sm">{localSearch ? (lang === 'bn' ? 'কোন ফলাফল পাওয়া যায়নি' : 'No results found') : t.noSalesReport}</p>}
+        {filteredLogs.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic text-sm">{localSearch ? (lang === 'bn' ? 'কোন ফলাফল পাওয়া যায়নি' : 'No results found') : (noDataMessage || t.noSalesReport)}</p>}
       </div>
     </div>
   );

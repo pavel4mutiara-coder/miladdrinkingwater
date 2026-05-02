@@ -34,8 +34,10 @@ service cloud.firestore {
     // --- Validation Blueprints ---
 
     function isValidVehicle(data) {
-      return data.keys().hasAll(['vehicleNumber', 'createdAt']) &&
+      return data.keys().hasAll(['vehicleNumber', 'name', 'type', 'createdAt']) &&
              data.vehicleNumber is string && data.vehicleNumber.size() > 0 && data.vehicleNumber.size() <= 50 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.type is string && data.type.size() <= 50 &&
              data.createdAt is timestamp;
     }
 

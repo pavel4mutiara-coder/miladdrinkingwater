@@ -1,0 +1,6 @@
+{
+  "appId": "com.milad.water",
+  "appName": "Milad Drinking Water",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

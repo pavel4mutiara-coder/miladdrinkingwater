@@ -70,11 +70,11 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-bg-warm">
+      <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'dark bg-slate-950' : 'bg-bg-warm'}`}>
         <motion.div 
           animate={{ scale: [1, 1.2, 1] }} 
           transition={{ repeat: Infinity, duration: 2 }}
-          className="text-ink font-semibold"
+          className={isDarkMode ? 'text-white font-semibold' : 'text-ink font-semibold'}
         >
           {t.loading}
         </motion.div>
@@ -84,10 +84,10 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center h-screen bg-bg-warm px-4 text-center">
+      <div className={`flex items-center justify-center h-screen px-4 text-center ${isDarkMode ? 'dark bg-slate-950' : 'bg-bg-warm'}`}>
         <div>
-          <h1 className="text-2xl font-bold mb-4">{t.appName}</h1>
-          <button onClick={() => window.location.reload()} className="bg-ink text-white px-6 py-2 rounded-xl">
+          <h1 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-ink'}`}>{t.appName}</h1>
+          <button onClick={() => window.location.reload()} className="bg-ink dark:bg-blue-600 text-white px-6 py-2 rounded-xl">
              Reload to Login
           </button>
         </div>
@@ -97,13 +97,13 @@ export default function App() {
 
 
   return (
-    <div className={`flex h-screen overflow-hidden ${isDarkMode ? 'dark bg-dark-bg text-dark-text' : 'bg-bg-warm text-ink'}`}>
+    <div className={`flex h-screen overflow-hidden safe-top safe-bottom select-none ${isDarkMode ? 'dark bg-dark-bg text-dark-text' : 'bg-bg-warm text-ink'}`}>
       {/* Sidebar */}
       <aside className="w-64 bg-white dark:bg-dark-surface border-r border-gray-100 dark:border-dark-border flex flex-col h-full hidden lg:flex">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-8">
             <Droplets className="text-blue-600 dark:text-blue-400 w-8 h-8" />
-            <span className="font-bold text-xl tracking-tight dark:text-white">Milad Water</span>
+            <span className="font-bold text-xl tracking-tight dark:text-white">Milad Drinking Water</span>
           </div>
           
           <nav className="space-y-1">
@@ -173,7 +173,7 @@ export default function App() {
         <header className="lg:hidden bg-white dark:bg-dark-surface px-6 py-4 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
            <div className="flex items-center gap-2">
             <Droplets className="text-blue-600 dark:text-blue-400 w-6 h-6" />
-            <span className="font-bold text-lg dark:text-white">Milad Water</span>
+            <span className="font-bold text-lg dark:text-white">Milad Drinking Water</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={toggleDarkMode} className="text-gray-400 dark:text-dark-muted">
