@@ -62,12 +62,12 @@ service cloud.firestore {
     }
 
     function isValidWaterSale(data) {
-      return data.keys().hasAll(['dealerId', 'date', 'productType', 'quantity', 'rate', 'totalAmount', 'createdAt']) &&
+      return data.keys().hasAll(['dealerId', 'date', 'productType', 'quantity', 'unitPrice', 'totalAmount', 'createdAt']) &&
              data.dealerId is string && data.dealerId.size() <= 128 &&
              data.date is string && data.date.size() <= 20 &&
              data.productType in ['20L Jar', '5L Bottle', 'Other'] &&
              data.quantity is number &&
-             data.rate is number &&
+             data.unitPrice is number &&
              data.totalAmount is number &&
              data.createdAt is timestamp;
     }

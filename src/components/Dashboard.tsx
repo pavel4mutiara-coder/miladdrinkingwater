@@ -72,22 +72,22 @@ export default function Dashboard({ lang }: { lang: Language }) {
   return (
     <div className="space-y-6 lg:space-y-12">
       <header>
-        <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">{t.dashboardOverview}</h1>
-        <p className="text-gray-500 mt-1">{t.allStats}</p>
+        <h1 className="text-2xl lg:text-3xl font-bold tracking-tight dark:text-white">{t.dashboardOverview}</h1>
+        <p className="text-gray-500 dark:text-dark-muted mt-1">{t.allStats}</p>
       </header>
 
       {/* --- Vehicle Business Section --- */}
       <section className="space-y-4 lg:space-y-6">
         <div className="flex items-center gap-3">
-           <div className="p-2 bg-blue-100 rounded-lg text-blue-600"><Truck size={18} /></div>
-           <h2 className="text-lg lg:text-xl font-bold">{t.vehicleBusiness}</h2>
+           <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400"><Truck size={18} /></div>
+           <h2 className="text-lg lg:text-xl font-bold dark:text-white">{t.vehicleBusiness}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-          <StatCard label={t.totalVehicleIncome} value={stats.totalVehicleIncome} icon={<TrendingUp className="text-emerald-500" />} color="bg-emerald-50" />
-          <StatCard label={t.totalMaintenanceCost} value={stats.totalMaintenanceCost} icon={<TrendingDown className="text-rose-500" />} color="bg-rose-50" />
-          <div className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm">
-             <p className="text-gray-400 text-xs font-medium mb-1">{t.vehicleNetProfit}</p>
-             <p className={`text-xl lg:text-2xl font-black ${vehicleNet >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+          <StatCard label={t.totalVehicleIncome} value={stats.totalVehicleIncome} icon={<TrendingUp className="text-emerald-500" />} color="bg-emerald-50 dark:bg-emerald-900/20" />
+          <StatCard label={t.totalMaintenanceCost} value={stats.totalMaintenanceCost} icon={<TrendingDown className="text-rose-500" />} color="bg-rose-50 dark:bg-rose-900/20" />
+          <div className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm">
+             <p className="text-gray-400 dark:text-dark-muted text-xs font-medium mb-1">{t.vehicleNetProfit}</p>
+             <p className={`text-xl lg:text-2xl font-black ${vehicleNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 ৳{vehicleNet.toLocaleString()}
              </p>
           </div>
@@ -97,15 +97,15 @@ export default function Dashboard({ lang }: { lang: Language }) {
       {/* --- Water Business Section --- */}
       <section className="space-y-4 lg:space-y-6">
         <div className="flex items-center gap-3">
-           <div className="p-2 bg-cyan-100 rounded-lg text-cyan-600"><Droplets size={18} /></div>
-           <h2 className="text-lg lg:text-xl font-bold">{t.waterBusiness}</h2>
+           <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg text-cyan-600 dark:text-cyan-400"><Droplets size={18} /></div>
+           <h2 className="text-lg lg:text-xl font-bold dark:text-white">{t.waterBusiness}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-          <StatCard label={t.totalWaterSales} value={stats.totalDealerSales} icon={<TrendingUp className="text-blue-500" />} color="bg-blue-50" />
-          <StatCard label={t.otherExpenses} value={stats.totalExpenses} icon={<TrendingDown className="text-orange-500" />} color="bg-orange-50" />
-          <div className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 shadow-sm">
-             <p className="text-gray-400 text-xs font-medium mb-1">{t.waterNetProfit}</p>
-             <p className={`text-xl lg:text-2xl font-black ${waterNet >= 0 ? 'text-blue-600' : 'text-rose-600'}`}>
+          <StatCard label={t.totalWaterSales} value={stats.totalDealerSales} icon={<TrendingUp className="text-blue-500" />} color="bg-blue-50 dark:bg-blue-900/20" />
+          <StatCard label={t.otherExpenses} value={stats.totalExpenses} icon={<TrendingDown className="text-orange-500" />} color="bg-orange-50 dark:bg-orange-900/20" />
+          <div className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm">
+             <p className="text-gray-400 dark:text-dark-muted text-xs font-medium mb-1">{t.waterNetProfit}</p>
+             <p className={`text-xl lg:text-2xl font-black ${waterNet >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 ৳{waterNet.toLocaleString()}
              </p>
           </div>
@@ -113,14 +113,14 @@ export default function Dashboard({ lang }: { lang: Language }) {
       </section>
       
       {/* Location Badge */}
-      <footer className="pt-6 lg:pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 opacity-50">
+      <footer className="pt-6 lg:pt-8 border-t border-gray-100 dark:border-dark-border flex flex-col md:flex-row justify-between items-start md:items-end gap-4 opacity-50 dark:opacity-80">
         <div>
-           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{t.location}</p>
-           <p className="text-xs lg:text-sm font-medium">{t.address}</p>
+           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-dark-muted">{t.location}</p>
+           <p className="text-xs lg:text-sm font-medium dark:text-white">{t.address}</p>
         </div>
         <div className="md:text-right">
-           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{t.company}</p>
-           <p className="text-xs lg:text-sm font-medium">{t.appName}</p>
+           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-dark-muted">{t.company}</p>
+           <p className="text-xs lg:text-sm font-medium dark:text-white">{t.appName}</p>
         </div>
       </footer>
     </div>
@@ -131,11 +131,11 @@ function StatCard({ label, value, icon, color, isCurrency = true }: { label: str
   return (
     <motion.div 
       whileHover={{ y: -3 }}
-      className="bg-white p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 flex items-start justify-between shadow-sm"
+      className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-dark-border flex items-start justify-between shadow-sm"
     >
       <div>
-        <p className="text-gray-400 text-xs font-medium mb-1">{label}</p>
-        <p className="text-xl lg:text-2xl font-bold text-ink">
+        <p className="text-gray-400 dark:text-dark-muted text-xs font-medium mb-1">{label}</p>
+        <p className="text-xl lg:text-2xl font-bold text-ink dark:text-white">
           {isCurrency ? '৳' : ''}{value.toLocaleString()}
         </p>
       </div>

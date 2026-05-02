@@ -23,7 +23,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [isManagingCategories, setIsManagingCategories] = useState(false);
-  const [categorySearch, setCategorySearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [newExpense, setNewExpense] = useState({ 
     date: new Date().toISOString().split('T')[0], 
     category: '', 
@@ -79,50 +79,75 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
   const totalExpense = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
   const filteredExpenses = expenses.filter(exp => 
-    exp.category.toLowerCase().includes(categorySearch.toLowerCase())
+    exp.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    exp.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 lg:space-y-8">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">{t.companyExpenses}</h1>
-          <p className="text-gray-500 text-sm lg:text-base mt-1">{lang === 'bn' ? 'অফিস এবং সাধারণ পরিচালনা ব্যয়' : 'Office and general operational expenses'}</p>
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight dark:text-white">{t.companyExpenses}</h1>
+          <p className="text-gray-500 dark:text-dark-muted text-sm lg:text-base mt-1">{lang === 'bn' ? 'অফিস এবং সাধারণ পরিচালনা ব্যয়' : 'Office and general operational expenses'}</p>
         </div>
-        <div className="bg-rose-50 px-4 lg:px-6 py-3 lg:py-4 rounded-2xl lg:rounded-3xl border border-rose-100 flex items-center gap-4 animate-in fade-in slide-in-from-right duration-500">
+        <div className="bg-rose-50 dark:bg-rose-900/10 px-4 lg:px-6 py-3 lg:py-4 rounded-2xl lg:rounded-3xl border border-rose-100 dark:border-rose-900/30 flex items-center gap-4 animate-in fade-in slide-in-from-right duration-500">
            <div className="p-2 lg:p-3 bg-rose-500 rounded-xl lg:rounded-2xl text-white">
               <TrendingDown size={20} className="lg:w-6 lg:h-6" />
            </div>
            <div>
-              <p className="text-rose-600 text-[10px] lg:text-xs font-bold uppercase tracking-wider">{t.totalExpense}</p>
-              <p className="text-xl lg:text-2xl font-black text-rose-700">৳{totalExpense.toLocaleString()}</p>
+              <p className="text-rose-600 dark:text-rose-400 text-[10px] lg:text-xs font-bold uppercase tracking-wider">{t.totalExpense}</p>
+              <p className="text-xl lg:text-2xl font-black text-rose-700 dark:text-rose-300">৳{totalExpense.toLocaleString()}</p>
            </div>
         </div>
       </header>
 
-      <div className="bg-white rounded-2xl lg:rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-        <div className="p-4 lg:p-8 border-b border-gray-50 flex items-center justify-between">
-          <h2 className="text-lg lg:text-xl font-bold flex items-center gap-2 text-ink">
-            <DollarSign className="text-rose-500" />
-            {t.addExpense}
-          </h2>
-          <button 
-            onClick={() => {
+      <div className="bg-white dark:bg-dark-surface rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-dark-border overflow-hidden shadow-sm">
+        <div className="p-4 lg:p-8 border-b border-gray-50 dark:border-dark-border flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 flex-1 max-w-md">
+            <h2 className="text-lg lg:text-xl font-bold flex items-center gap-2 text-ink dark:text-white shrink-0">
+              <DollarSign className="text-rose-500 dark:text-rose-400" />
+              {t.addExpense}
+            </h2>
+            <div className="relative flex-1 hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 dark:text-dark-muted" size={16} />
+              <input 
+                type="text"
+                placeholder={lang === 'bn' ? "বিবরণ বা ক্যাটেগরি দিয়ে খুঁজুন..." : "Search description or category..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm dark:text-white"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative md:hidden">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 dark:text-dark-muted" size={14} />
+              <input 
+                type="text"
+                placeholder={lang === 'bn' ? "খুঁজুন..." : "Search..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-32 pl-9 pr-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-xs dark:text-white"
+              />
+            </div>
+            <button 
+              onClick={() => {
               const becomingVisible = !showAdd;
               setShowAdd(becomingVisible);
-              if (becomingVisible && categorySearch) {
+              if (becomingVisible && searchQuery) {
                 // Check if the search matches an existing category
-                const matched = categories.find(c => c.name.toLowerCase() === categorySearch.toLowerCase());
+                const matched = categories.find(c => c.name.toLowerCase() === searchQuery.toLowerCase());
                 if (matched) {
                   setNewExpense(prev => ({ ...prev, category: matched.name }));
                 }
               }
             }}
-            className={`p-2 lg:p-3 rounded-xl lg:rounded-2xl transition-all ${showAdd ? 'bg-ink text-white rotate-45' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+            className={`p-2 lg:p-3 rounded-xl lg:rounded-2xl transition-all ${showAdd ? 'bg-ink dark:bg-blue-600 text-white rotate-45' : 'bg-gray-50 dark:bg-dark-bg text-gray-400 dark:text-dark-muted hover:bg-gray-100 dark:hover:bg-dark-bg'}`}
           >
             <Plus size={20} className="lg:w-6 lg:h-6" />
           </button>
         </div>
+      </div>
 
         <AnimatePresence>
           {showAdd && (
@@ -130,27 +155,27 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-b border-gray-50 bg-gray-50/30"
+              className="overflow-hidden border-b border-gray-50 dark:border-dark-border bg-gray-50/30 dark:bg-dark-bg/30"
             >
               <form onSubmit={handleSubmit} className="p-4 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                 <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.date}</label>
+                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.date}</label>
                       <input 
                         type="date" 
                         required 
                         value={newExpense.date} 
                         onChange={e => setNewExpense({...newExpense, date: e.target.value})} 
-                        className="w-full px-4 py-2 lg:py-3 bg-white border border-gray-100 rounded-xl lg:rounded-2xl text-sm" 
+                        className="w-full px-4 py-2 lg:py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl text-sm dark:text-white" 
                       />
                    </div>
                    <div className="space-y-1.5">
                       <div className="flex justify-between items-center">
-                        <label className="text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.category}</label>
+                        <label className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.category}</label>
                         <button 
                           type="button" 
                           onClick={() => setIsManagingCategories(true)}
-                          className="text-[10px] font-bold text-blue-600 hover:underline"
+                          className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline"
                         >
                           {lang === 'bn' ? 'ম্যানেজ করুন' : 'Manage'}
                         </button>
@@ -160,42 +185,42 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
                           required
                           value={newExpense.category} 
                           onChange={e => setNewExpense({...newExpense, category: e.target.value})} 
-                          className="w-full px-4 py-2 lg:py-3 bg-white border border-gray-100 rounded-xl lg:rounded-2xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                          className="w-full px-4 py-2 lg:py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:text-white"
                         >
-                          <option value="" disabled>{lang === 'bn' ? 'নির্বাচন করুন' : 'Select Category'}</option>
-                          {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                          {categories.length === 0 && <option value="" disabled>{lang === 'bn' ? 'প্রথমে ক্যাটেগরি যোগ করুন' : 'No categories available'}</option>}
+                          <option value="" disabled className="dark:bg-dark-surface">{lang === 'bn' ? 'নির্বাচন করুন' : 'Select Category'}</option>
+                          {categories.map(c => <option key={c.id} value={c.name} className="dark:bg-dark-surface">{c.name}</option>)}
+                          {categories.length === 0 && <option value="" disabled className="dark:bg-dark-surface">{lang === 'bn' ? 'প্রথমে ক্যাটেগরি যোগ করুন' : 'No categories available'}</option>}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted pointer-events-none" size={16} />
                       </div>
                    </div>
                 </div>
                 <div className="space-y-4">
                    <div className="space-y-1.5">
-                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.amount} (৳)</label>
+                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.amount} (৳)</label>
                       <input 
                         type="number" 
                         required 
                         placeholder="0" 
                         value={newExpense.amount || ''} 
                         onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value)})} 
-                        className="w-full px-4 py-2 lg:py-3 bg-white border border-gray-100 rounded-xl lg:rounded-2xl font-bold text-base lg:text-lg" 
+                        className="w-full px-4 py-2 lg:py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl font-bold text-base lg:text-lg dark:text-white" 
                       />
                    </div>
                    <div className="space-y-1.5">
-                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.description}</label>
+                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.description}</label>
                       <input 
                         type="text" 
                         required 
                         placeholder={lang === 'bn' ? "খরচের বিবরণ লিখুন..." : "Enter expense description..."} 
                         value={newExpense.description} 
                         onChange={e => setNewExpense({...newExpense, description: e.target.value})} 
-                        className="w-full px-4 py-2 lg:py-3 bg-white border border-gray-100 rounded-xl lg:rounded-2xl text-sm" 
+                        className="w-full px-4 py-2 lg:py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl text-sm dark:text-white" 
                       />
                    </div>
                 </div>
                 <div className="md:col-span-2 pt-2">
-                   <button className="w-full py-3 lg:py-4 bg-ink text-white rounded-xl lg:rounded-2xl font-bold hover:bg-black transition-all shadow-md">{t.save}</button>
+                   <button className="w-full py-3 lg:py-4 bg-ink dark:bg-blue-600 text-white rounded-xl lg:rounded-2xl font-bold hover:bg-black dark:hover:bg-blue-700 transition-all shadow-md">{t.save}</button>
                 </div>
               </form>
             </motion.div>
@@ -205,39 +230,25 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
         <div className="p-0 overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="text-left bg-gray-50/50">
-                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest">{t.date}</th>
-                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest min-w-[140px]">
-                  <div className="flex flex-col gap-2">
-                    <span>{t.category}</span>
-                    <div className="relative">
-                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" size={12} />
-                      <input 
-                        type="text"
-                        placeholder={lang === 'bn' ? "খুঁজুন..." : "Filter..."}
-                        value={categorySearch}
-                        onChange={(e) => setCategorySearch(e.target.value)}
-                        className="w-full pl-6 pr-2 py-1 bg-white border border-gray-100 rounded-lg text-[10px] lowercase focus:outline-none focus:ring-1 focus:ring-blue-500 font-normal normal-case"
-                      />
-                    </div>
-                  </div>
-                </th>
-                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest">{t.description}</th>
-                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest text-right">{t.amount} (৳)</th>
-                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 uppercase tracking-widest text-right"></th>
+              <tr className="text-left bg-gray-50/50 dark:bg-dark-bg/50">
+                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.date}</th>
+                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.category}</th>
+                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.description}</th>
+                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.amount} (৳)</th>
+                <th className="px-4 lg:px-8 py-3 lg:py-4 text-[10px] lg:text-xs font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
               {filteredExpenses.map(exp => (
-                <tr key={exp.id} className="group hover:bg-gray-50/30 transition-colors">
-                  <td className="px-4 lg:px-8 py-4 lg:py-5 text-[10px] lg:text-sm font-medium text-gray-400">{exp.date}</td>
+                <tr key={exp.id} className="group hover:bg-gray-50/30 dark:hover:bg-dark-bg/30 transition-colors">
+                  <td className="px-4 lg:px-8 py-4 lg:py-5 text-[10px] lg:text-sm font-medium text-gray-400 dark:text-dark-muted">{exp.date}</td>
                   <td className="px-4 lg:px-8 py-4 lg:py-5">
-                    <span className="text-[10px] lg:text-xs font-bold px-2 lg:px-2.5 py-0.5 lg:py-1 bg-gray-100 rounded-full text-gray-600">{exp.category}</span>
+                    <span className="text-[10px] lg:text-xs font-bold px-2 lg:px-2.5 py-0.5 lg:py-1 bg-gray-100 dark:bg-dark-bg rounded-full text-gray-600 dark:text-dark-muted">{exp.category}</span>
                   </td>
-                  <td className="px-4 lg:px-8 py-4 lg:py-5 text-xs lg:text-sm text-ink font-medium max-w-[120px] lg:max-w-xs truncate">{exp.description}</td>
-                  <td className="px-4 lg:px-8 py-4 lg:py-5 text-right font-black text-ink text-xs lg:text-sm">৳{exp.amount.toLocaleString()}</td>
+                  <td className="px-4 lg:px-8 py-4 lg:py-5 text-xs lg:text-sm text-ink dark:text-white font-medium max-w-[120px] lg:max-w-xs truncate">{exp.description}</td>
+                  <td className="px-4 lg:px-8 py-4 lg:py-5 text-right font-black text-ink dark:text-white text-xs lg:text-sm">৳{exp.amount.toLocaleString()}</td>
                   <td className="px-4 lg:px-8 py-4 lg:py-5 text-right">
-                    <button onClick={() => handleDelete(exp.id)} className="text-gray-200 hover:text-red-500 transition-all p-1">
+                    <button onClick={() => handleDelete(exp.id)} className="text-gray-200 dark:text-dark-muted hover:text-red-500 transition-all p-1">
                       <Trash2 size={16} className="lg:w-5 lg:h-5" />
                     </button>
                   </td>
@@ -246,8 +257,8 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
             </tbody>
           </table>
           {filteredExpenses.length === 0 && (
-            <div className="p-16 lg:p-20 text-center text-gray-400 italic text-sm">
-               {categorySearch 
+            <div className="p-16 lg:p-20 text-center text-gray-400 dark:text-dark-muted italic text-sm">
+               {searchQuery 
                  ? (lang === 'bn' ? 'কোন ফলাফল পাওয়া যায়নি' : 'No matching records found')
                  : (lang === 'bn' ? 'কোন খরচের রেকর্ড খুঁজে পাওয়া যায়নি' : 'No expense records found')
                }
@@ -300,13 +311,13 @@ function CategoryModal({ isOpen, onClose, categories, lang }: { isOpen: boolean,
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-3xl p-6 lg:p-8 max-w-md w-full shadow-2xl relative"
+            className="bg-white dark:bg-dark-surface rounded-3xl p-6 lg:p-8 max-w-md w-full shadow-2xl relative border dark:border-dark-border"
           >
-            <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-ink p-1">
+            <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white p-1">
               <X size={24} />
             </button>
             
-            <h2 className="text-xl lg:text-2xl font-bold mb-6 text-ink">{lang === 'bn' ? 'ক্যাটেগরি ম্যানেজ করুন' : 'Manage Categories'}</h2>
+            <h2 className="text-xl lg:text-2xl font-bold mb-6 text-ink dark:text-white">{lang === 'bn' ? 'ক্যাটেগরি ম্যানেজ করুন' : 'Manage Categories'}</h2>
             
             <form onSubmit={handleAdd} className="mb-6 lg:mb-8 flex gap-2">
               <input 
@@ -314,21 +325,21 @@ function CategoryModal({ isOpen, onClose, categories, lang }: { isOpen: boolean,
                 placeholder={lang === 'bn' ? "নতুন ক্যাটেগরির নাম..." : "New category name..."} 
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
-                className="flex-1 px-4 py-2 lg:py-3 bg-gray-50 border border-gray-100 rounded-xl lg:rounded-2xl focus:outline-none focus:border-blue-500 text-sm"
+                className="flex-1 px-4 py-2 lg:py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl focus:outline-none focus:border-blue-500 dark:text-white text-sm"
               />
-              <button className="bg-ink text-white px-4 py-2 lg:py-3 rounded-xl lg:rounded-2xl font-bold text-sm">{lang === 'bn' ? 'যোগ করুন' : 'Add'}</button>
+              <button className="bg-ink dark:bg-blue-600 text-white px-4 py-2 lg:py-3 rounded-xl lg:rounded-2xl font-bold text-sm hover:bg-black dark:hover:bg-blue-700 transition-colors uppercase tracking-wider">{lang === 'bn' ? 'যোগ করুন' : 'Add'}</button>
             </form>
 
             <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
               {categories.map(c => (
-                <div key={c.id} className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 rounded-xl lg:rounded-2xl group transition-all hover:bg-gray-100">
-                  <span className="font-medium text-sm text-ink">{c.name}</span>
-                  <button onClick={() => handleDelete(c.id)} className="text-gray-300 hover:text-red-500 transition-colors">
+                <div key={c.id} className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg/50 rounded-xl lg:rounded-2xl group transition-all hover:bg-gray-100 dark:hover:bg-dark-bg">
+                  <span className="font-medium text-sm text-ink dark:text-white">{c.name}</span>
+                  <button onClick={() => handleDelete(c.id)} className="text-gray-300 dark:text-dark-muted hover:text-red-500 transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
-              {categories.length === 0 && <p className="text-center text-gray-400 text-sm italic py-4">{lang === 'bn' ? 'কোন ক্যাটেগরি নেই' : 'No categories'}</p>}
+              {categories.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted text-sm italic py-4">{lang === 'bn' ? 'কোন ক্যাটেগরি নেই' : 'No categories'}</p>}
             </div>
           </motion.div>
         </div>

@@ -40,7 +40,7 @@ export interface WaterSale {
   date: string; // YYYY-MM-DD
   productType: '20L Jar' | '5L Bottle' | 'Other';
   quantity: number;
-  rate: number;
+  unitPrice: number;
   totalAmount: number;
   createdAt: Timestamp;
 }

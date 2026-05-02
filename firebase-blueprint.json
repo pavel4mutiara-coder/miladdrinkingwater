@@ -64,11 +64,11 @@
         "date": { "type": "string", "format": "date" },
         "productType": { "type": "string", "enum": ["20L Jar", "5L Bottle", "Other"] },
         "quantity": { "type": "number" },
-        "rate": { "type": "number" },
+        "unitPrice": { "type": "number" },
         "totalAmount": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["dealerId", "date", "productType", "quantity", "rate", "totalAmount", "createdAt"]
+      "required": ["dealerId", "date", "productType", "quantity", "unitPrice", "totalAmount", "createdAt"]
     },
     "CompanyExpense": {
       "title": "Company Expense",

@@ -21,7 +21,9 @@ import {
   BarChart3,
   Calendar,
   ChevronRight,
-  Languages
+  Languages,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { Vehicle, Maintenance, VehicleIncome, Dealer, WaterSale, CompanyExpense } from './types';
 import { translations, Language } from './locales';
@@ -40,10 +42,24 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [lang, setLang] = useState<Language>('bn');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'vehicles' | 'dealers' | 'expenses'>('dashboard');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('milad_water_theme') === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('milad_water_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('milad_water_theme', 'light');
+    }
+  }, [isDarkMode]);
 
   const t = translations[lang];
 
   const toggleLang = () => setLang(prev => prev === 'bn' ? 'en' : 'bn');
+  const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
   const handleLogout = () => {
     if (window.confirm(lang === 'bn' ? 'আপনি কি নিশ্চিত?' : 'Are you sure?')) {
@@ -81,13 +97,13 @@ export default function App() {
 
 
   return (
-    <div className="flex h-screen bg-bg-warm overflow-hidden">
+    <div className={`flex h-screen overflow-hidden ${isDarkMode ? 'dark bg-dark-bg text-dark-text' : 'bg-bg-warm text-ink'}`}>
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-100 flex flex-col h-full hidden lg:flex">
+      <aside className="w-64 bg-white dark:bg-dark-surface border-r border-gray-100 dark:border-dark-border flex flex-col h-full hidden lg:flex">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-8">
-            <Droplets className="text-blue-600 w-8 h-8" />
-            <span className="font-bold text-xl tracking-tight">Milad Water</span>
+            <Droplets className="text-blue-600 dark:text-blue-400 w-8 h-8" />
+            <span className="font-bold text-xl tracking-tight dark:text-white">Milad Water</span>
           </div>
           
           <nav className="space-y-1">
@@ -118,20 +134,28 @@ export default function App() {
           </nav>
         </div>
         
-        <div className="mt-auto p-6 border-t border-gray-50 flex flex-col gap-4">
+        <div className="mt-auto p-6 border-t border-gray-50 dark:border-dark-border flex flex-col gap-4">
+          <button 
+            onClick={toggleDarkMode}
+            className="flex items-center gap-2 text-sm text-gray-500 dark:text-dark-muted hover:text-ink dark:hover:text-white font-medium transition-colors"
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            {isDarkMode ? (lang === 'bn' ? 'লাইট মোড' : 'Light Mode') : (lang === 'bn' ? 'ডার্ক মোড' : 'Dark Mode')}
+          </button>
+          
           <button 
             onClick={toggleLang}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-ink font-medium transition-colors"
+            className="flex items-center gap-2 text-sm text-gray-500 dark:text-dark-muted hover:text-ink dark:hover:text-white font-medium transition-colors"
           >
             <Languages size={18} />
             {lang === 'bn' ? 'Switch to English' : 'বাংলায় দেখুন'}
           </button>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 border-t border-gray-50 dark:border-dark-border pt-4">
             <img src={user.photoURL || ''} className="w-8 h-8 rounded-full" alt="User" />
             <div className="overflow-hidden">
-              <p className="text-sm font-medium text-ink truncate">{user.displayName}</p>
-              <p className="text-xs text-gray-400 truncate">Milad Drinking Water</p>
+              <p className="text-sm font-medium text-ink dark:text-white truncate">{user.displayName}</p>
+              <p className="text-xs text-gray-400 dark:text-dark-muted truncate">Milad Drinking Water</p>
             </div>
           </div>
           <button 
@@ -146,23 +170,26 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <header className="lg:hidden bg-white dark:bg-dark-surface px-6 py-4 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
            <div className="flex items-center gap-2">
-            <Droplets className="text-blue-600 w-6 h-6" />
-            <span className="font-bold text-lg">Milad Water</span>
+            <Droplets className="text-blue-600 dark:text-blue-400 w-6 h-6" />
+            <span className="font-bold text-lg dark:text-white">Milad Water</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={toggleLang} className="text-gray-400">
+            <button onClick={toggleDarkMode} className="text-gray-400 dark:text-dark-muted">
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button onClick={toggleLang} className="text-gray-400 dark:text-dark-muted">
               <Languages size={20} />
             </button>
-            <button onClick={handleLogout} className="text-gray-400">
+            <button onClick={handleLogout} className="text-gray-400 dark:text-dark-muted text-red-500">
               <LogOut size={20} />
             </button>
           </div>
         </header>
 
         {/* Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-10 pb-24 lg:pb-10">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-10 pb-24 lg:pb-10 bg-bg-warm dark:bg-dark-bg transition-colors duration-300">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -180,7 +207,7 @@ export default function App() {
         </div>
 
         {/* Mobile Nav */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-gray-100 px-6 py-3 flex justify-between z-40">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-lg border-t border-gray-100 dark:border-dark-border px-6 py-3 flex justify-between z-40">
            <MobileNavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={24} />} />
            <MobileNavItem active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Truck size={24} />} />
            <MobileNavItem active={activeTab === 'dealers'} onClick={() => setActiveTab('dealers')} icon={<Users size={24} />} />
@@ -196,7 +223,9 @@ function NavItem({ active, onClick, icon, label }: { active: boolean, onClick: (
     <button 
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-        active ? 'bg-ink text-white' : 'text-gray-500 hover:bg-gray-50'
+        active 
+          ? 'bg-ink dark:bg-blue-600 text-white shadow-lg shadow-blue-500/10' 
+          : 'text-gray-500 dark:text-dark-muted hover:bg-gray-50 dark:hover:bg-dark-bg'
       }`}
     >
       {icon}
@@ -210,7 +239,11 @@ function MobileNavItem({ active, onClick, icon }: { active: boolean, onClick: ()
   return (
     <button 
       onClick={onClick}
-      className={`p-3 rounded-2xl transition-all ${active ? 'text-blue-600 bg-blue-50 shadow-sm' : 'text-gray-400'}`}
+      className={`p-3 rounded-2xl transition-all ${
+        active 
+          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-sm' 
+          : 'text-gray-400 dark:text-dark-muted'
+      }`}
     >
       {icon}
     </button>

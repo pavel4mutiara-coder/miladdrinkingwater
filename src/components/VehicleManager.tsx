@@ -82,23 +82,23 @@ export default function VehicleManager({ lang }: { lang: Language }) {
       {/* Sidebar List */}
       <div className={`w-full lg:w-80 flex flex-col gap-4 ${selectedVehicle ? 'hidden lg:flex' : 'flex'}`}>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink">{t.vehicleList}</h2>
+          <h2 className="text-xl font-bold text-ink dark:text-white">{t.vehicleList}</h2>
           <button 
             onClick={() => setIsAddingVehicle(true)}
-            className="p-2 bg-ink text-white rounded-xl"
+            className="p-2 bg-ink dark:bg-blue-600 text-white rounded-xl"
           >
             <Plus size={20} />
           </button>
         </div>
 
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted" size={18} />
           <input 
             type="text" 
             placeholder={lang === 'bn' ? "গাড়ি খুঁজুন..." : "Search vehicles..."} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm dark:text-white"
           />
         </div>
 
@@ -109,25 +109,27 @@ export default function VehicleManager({ lang }: { lang: Language }) {
               key={v.id}
               onClick={() => setSelectedVehicle(v)}
               className={`p-4 rounded-2xl cursor-pointer border transition-all ${
-                selectedVehicle?.id === v.id ? 'bg-ink text-white border-ink shadow-lg ring-4 ring-blue-50' : 'bg-white border-gray-100 hover:border-blue-200'
+                selectedVehicle?.id === v.id 
+                  ? 'bg-ink dark:bg-blue-600 text-white border-ink dark:border-blue-500 shadow-xl ring-4 ring-blue-50 dark:ring-blue-900/20' 
+                  : 'bg-white dark:bg-dark-surface border-gray-100 dark:border-dark-border hover:border-blue-200 dark:hover:border-blue-800'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <div className={`px-2 py-1 ${selectedVehicle?.id === v.id ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-600'} rounded text-[10px] font-black uppercase tracking-tighter`}>
+                <div className={`px-2 py-1 ${selectedVehicle?.id === v.id ? 'bg-white/20 text-white' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'} rounded text-[10px] font-black uppercase tracking-tighter`}>
                   {v.vehicleNumber}
                 </div>
                 <button 
                   onClick={(e) => { e.stopPropagation(); handleDeleteVehicle(v.id); }}
-                  className={`${selectedVehicle?.id === v.id ? 'text-white/50 hover:text-white' : 'text-gray-300 hover:text-red-500'}`}
+                  className={`${selectedVehicle?.id === v.id ? 'text-white/50 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-red-500'}`}
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
-              <p className="font-bold">{v.name}</p>
-              <p className={`text-xs ${selectedVehicle?.id === v.id ? 'text-white/60' : 'text-gray-400'}`}>{v.type}</p>
+              <p className="font-bold dark:text-white">{v.name}</p>
+              <p className={`text-xs ${selectedVehicle?.id === v.id ? 'text-white/60' : 'text-gray-400 dark:text-dark-muted'}`}>{v.type}</p>
             </motion.div>
           ))}
-          {vehicles.length === 0 && <p className="text-center text-gray-400 py-10 italic text-sm">{t.noVehicle}</p>}
+          {vehicles.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic text-sm">{t.noVehicle}</p>}
         </div>
       </div>
 
@@ -135,28 +137,28 @@ export default function VehicleManager({ lang }: { lang: Language }) {
       <div className={`flex-1 h-full overflow-y-auto pr-0 lg:pr-4 ${!selectedVehicle ? 'hidden lg:flex items-center justify-center' : 'flex flex-col'}`}>
         {!selectedVehicle ? (
           <div className="text-center">
-            <Truck className="w-16 h-16 text-gray-100 mx-auto mb-4" />
-            <p className="text-gray-400 font-medium">{t.selectVehicle}</p>
+            <Truck className="w-16 h-16 text-gray-100 dark:text-dark-surface mx-auto mb-4" />
+            <p className="text-gray-400 dark:text-dark-muted font-medium">{t.selectVehicle}</p>
           </div>
         ) : (
           <div className="space-y-6 lg:space-y-8 pb-10">
-            <div className="bg-white p-6 lg:p-8 rounded-3xl border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-10 -mt-10 opacity-50" />
+            <div className="bg-white dark:bg-dark-surface p-6 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 dark:bg-blue-900/10 rounded-bl-full -mr-10 -mt-10 opacity-50" />
                <div className="flex items-center gap-4">
                  <button 
                    onClick={() => setSelectedVehicle(null)}
-                   className="lg:hidden p-2 text-gray-400 bg-gray-50 rounded-full"
+                   className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-full"
                  >
                    <ChevronRight className="rotate-180" size={20} />
                  </button>
                  <div>
-                    <h1 className="text-2xl lg:text-3xl font-black text-ink mb-1">{selectedVehicle.vehicleNumber}</h1>
-                    <p className="text-gray-500 text-sm lg:text-base font-medium">{selectedVehicle.name} • {selectedVehicle.type}</p>
+                    <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white mb-1">{selectedVehicle.vehicleNumber}</h1>
+                    <p className="text-gray-500 dark:text-dark-muted text-sm lg:text-base font-medium">{selectedVehicle.name} • {selectedVehicle.type}</p>
                  </div>
                </div>
                <div className="text-right hidden md:block">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.location}</p>
-                  <p className="text-ink font-medium text-sm">{t.address}</p>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.location}</p>
+                  <p className="text-ink dark:text-white font-medium text-sm">{t.address}</p>
                </div>
             </div>
 
@@ -321,45 +323,46 @@ function VehicleSummary({ vehicleId, lang }: { vehicleId: string, lang: Language
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-3xl">
-          <p className="text-emerald-600 text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-1">{t.totalIncome}</p>
-          <p className="text-2xl lg:text-3xl font-black text-emerald-700">৳{totalIncome.toLocaleString()}</p>
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 p-6 rounded-3xl">
+          <p className="text-emerald-600 dark:text-emerald-400 text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-1">{t.totalIncome}</p>
+          <p className="text-2xl lg:text-3xl font-black text-emerald-700 dark:text-emerald-300">৳{totalIncome.toLocaleString()}</p>
         </div>
-        <div className="bg-rose-50 border border-rose-100 p-6 rounded-3xl">
-          <p className="text-rose-600 text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-1">{t.totalMaintenance}</p>
-          <p className="text-2xl lg:text-3xl font-black text-rose-700">৳{totalMaintenance.toLocaleString()}</p>
+        <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30 p-6 rounded-3xl">
+          <p className="text-rose-600 dark:text-rose-400 text-[10px] lg:text-xs font-bold uppercase tracking-widest mb-1">{t.totalMaintenance}</p>
+          <p className="text-2xl lg:text-3xl font-black text-rose-700 dark:text-rose-300">৳{totalMaintenance.toLocaleString()}</p>
         </div>
       </div>
 
       {sortedMonths.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-white p-4 lg:p-6 rounded-3xl border border-gray-100">
-             <h3 className="text-sm font-bold text-ink uppercase tracking-widest mb-6 flex items-center gap-2">
-                <BarChart2 className="text-blue-500" size={16} />
+          <div className="lg:col-span-2 bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-3xl border border-gray-100 dark:border-dark-border">
+             <h3 className="text-sm font-bold text-ink dark:text-white uppercase tracking-widest mb-6 flex items-center gap-2">
+                <BarChart2 className="text-blue-500 dark:text-blue-400" size={16} />
                 {t.profitAnalysis}
              </h3>
              <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
                     <XAxis 
                       dataKey="name" 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#94a3b8', fontSize: 10 }}
                     />
                     <YAxis 
                       axisLine={false} 
                       tickLine={false} 
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#94a3b8', fontSize: 10 }}
                     />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      cursor={{ fill: '#f9fafb' }}
+                      contentStyle={{ backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                      labelStyle={{ color: '#f8fafc' }}
                     />
                     <Legend 
                       iconType="circle" 
-                      wrapperStyle={{ paddingTop: '20px', fontSize: '10px', textTransform: 'uppercase', fontWeight: 'bold' }} 
+                      wrapperStyle={{ paddingTop: '20px', fontSize: '10px', textTransform: 'uppercase', fontWeights: 'bold', color: '#94a3b8' }} 
                     />
                     <Bar name={lang === 'bn' ? "ইনকাম" : "Income"} dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
                     <Bar name={lang === 'bn' ? "ব্যয়" : "Cost"} dataKey="maintenance" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
@@ -368,21 +371,21 @@ function VehicleSummary({ vehicleId, lang }: { vehicleId: string, lang: Language
              </div>
           </div>
 
-          <div className="bg-white p-4 lg:p-6 rounded-3xl border border-gray-100 h-fit lg:max-h-[350px] overflow-hidden flex flex-col">
-             <h3 className="text-sm font-bold text-ink uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Calendar className="text-blue-500" size={16} />
+          <div className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-3xl border border-gray-100 dark:border-dark-border h-fit lg:max-h-[350px] overflow-hidden flex flex-col">
+             <h3 className="text-sm font-bold text-ink dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Calendar className="text-blue-500 dark:text-blue-400" size={16} />
                 {t.monthlyBreakdown}
              </h3>
              <div className="space-y-3 overflow-y-auto pr-1 flex-1">
                 {sortedMonths.map(month => (
-                  <div key={month} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 grow">
-                     <span className="text-[10px] lg:text-xs font-bold text-gray-500">{month}</span>
+                  <div key={month} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-dark-border last:border-0 grow">
+                     <span className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted">{month}</span>
                      <div className="flex gap-2 lg:gap-4">
                         <div className="text-right">
-                           <p className="text-xs font-bold text-emerald-600">৳{(monthlyStats[month].income || 0).toLocaleString()}</p>
+                           <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">৳{(monthlyStats[month].income || 0).toLocaleString()}</p>
                         </div>
                         <div className="text-right">
-                           <p className="text-xs font-bold text-rose-600">৳{(monthlyStats[month].maintenance || 0).toLocaleString()}</p>
+                           <p className="text-xs font-bold text-rose-600 dark:text-rose-400">৳{(monthlyStats[month].maintenance || 0).toLocaleString()}</p>
                         </div>
                      </div>
                   </div>
@@ -443,21 +446,21 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
   );
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm flex flex-col">
-      <div className="p-4 lg:p-6 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50/30 gap-4">
+    <div className="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border overflow-hidden shadow-sm flex flex-col">
+      <div className="p-4 lg:p-6 border-b border-gray-50 dark:border-dark-border flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50/30 dark:bg-dark-bg/30 gap-4">
         <div className="flex items-center gap-2">
-           <span className="text-blue-500">{icon}</span>
-           <h3 className="font-bold text-ink text-sm lg:text-base">{title}</h3>
+           <span className="text-blue-500 dark:text-blue-400">{icon}</span>
+           <h3 className="font-bold text-ink dark:text-white text-sm lg:text-base">{title}</h3>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted" size={14} />
             <input 
               type="text" 
               placeholder={t.search}
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              className="pl-8 pr-3 py-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
             />
           </div>
           <button 
@@ -465,7 +468,7 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
               setShowAdd(!showAdd);
               if (!showAdd) setNewData({ date: new Date().toISOString().split('T')[0] });
             }}
-            className={`p-2 rounded-xl transition-all ${showAdd ? 'bg-rose-50 text-rose-500 rotate-45' : 'bg-blue-50 text-blue-500'}`}
+            className={`p-2 rounded-xl transition-all ${showAdd ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-500'}`}
           >
             <Plus size={18} />
           </button>
@@ -479,22 +482,22 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             onSubmit={handleSubmit}
-            className="p-4 lg:p-6 bg-blue-50/30 border-b border-gray-50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="p-4 lg:p-6 bg-blue-50/30 dark:bg-blue-900/10 border-b border-gray-50 dark:border-dark-border grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
             {fields.map(f => (
               <div key={f.name} className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{f.label}</label>
+                <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{f.label}</label>
                 <input 
                   required
                   type={f.type} 
                   value={newData[f.name] || ''} 
                   onChange={e => setNewData({...newData, [f.name]: e.target.value})} 
-                  className="w-full px-3 py-2 bg-white border border-gray-100 rounded-xl focus:outline-none focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
                 />
               </div>
             ))}
             <div className="flex items-end lg:col-span-1">
-               <button className="w-full bg-ink text-white py-2 rounded-xl font-bold text-sm">{t.save}</button>
+               <button className="w-full bg-ink dark:bg-blue-600 text-white py-2 rounded-xl font-bold text-sm">{t.save}</button>
             </div>
           </motion.form>
         )}
@@ -502,24 +505,24 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
 
       <div className="max-h-80 overflow-y-auto overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="bg-gray-50/50">
+          <thead className="bg-gray-50/50 dark:bg-dark-bg/50">
             <tr>
-              {fields.map(f => <th key={f.name} className="px-4 lg:px-6 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{f.label}</th>)}
+              {fields.map(f => <th key={f.name} className="px-4 lg:px-6 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{f.label}</th>)}
               <th className="px-4 lg:px-6 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
             {filteredLogs.map(log => (
-              <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+              <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-dark-bg/50 transition-colors">
                 {fields.map(f => (
-                  <td key={f.name} className="px-4 lg:px-6 py-4 text-xs font-bold text-ink">
+                  <td key={f.name} className="px-4 lg:px-6 py-4 text-xs font-bold text-ink dark:text-dark-text">
                     {f.type === 'number' ? `৳${(log[f.name] || 0).toLocaleString()}` : log[f.name]}
                   </td>
                 ))}
                 <td className="px-4 lg:px-6 py-4 text-right">
                   <button 
                     onClick={() => handleDelete(log.id)}
-                    className="text-gray-300 hover:text-red-500"
+                    className="text-gray-300 dark:text-dark-muted hover:text-red-500"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -528,7 +531,7 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
             ))}
           </tbody>
         </table>
-        {filteredLogs.length === 0 && <p className="text-center text-gray-400 py-10 italic text-sm">{localSearch ? (lang === 'bn' ? 'কোন ফলাফল পাওয়া যায়নি' : 'No results found') : t.noSalesReport}</p>}
+        {filteredLogs.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic text-sm">{localSearch ? (lang === 'bn' ? 'কোন ফলাফল পাওয়া যায়নি' : 'No results found') : t.noSalesReport}</p>}
       </div>
     </div>
   );

@@ -71,26 +71,26 @@ export default function DealerManager({ lang }: { lang: Language }) {
       {/* Dealer List */}
       <div className={`w-full lg:w-80 flex flex-col gap-4 ${selectedDealer ? 'hidden lg:flex' : 'flex'}`}>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Users size={24} className="text-cyan-600" />
+          <h2 className="text-xl font-bold flex items-center gap-2 dark:text-white">
+            <Users size={24} className="text-cyan-600 dark:text-cyan-400" />
             {t.dealerList}
           </h2>
           <button 
             onClick={() => setIsAddingDealer(true)}
-            className="p-2 bg-ink text-white rounded-xl hover:bg-black transition-colors"
+            className="p-2 bg-ink dark:bg-blue-600 text-white rounded-xl hover:bg-black transition-colors"
           >
             <Plus size={20} />
           </button>
         </div>
 
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted" size={18} />
           <input 
             type="text" 
             placeholder={t.searchDealer} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-sm"
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-sm dark:text-white"
           />
         </div>
 
@@ -102,27 +102,27 @@ export default function DealerManager({ lang }: { lang: Language }) {
               onClick={() => setSelectedDealer(d)}
               className={`p-4 rounded-2xl cursor-pointer border transition-all ${
                 selectedDealer?.id === d.id 
-                  ? 'bg-cyan-600 text-white border-cyan-600 shadow-lg shadow-cyan-600/10' 
-                  : 'bg-white border-gray-100 hover:border-cyan-200'
+                  ? 'bg-cyan-600 dark:bg-blue-600 text-white border-cyan-600 dark:border-blue-500 shadow-lg shadow-cyan-600/10' 
+                  : 'bg-white dark:bg-dark-surface border-gray-100 dark:border-dark-border hover:border-cyan-200 dark:hover:border-blue-400'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-bold">{d.name}</p>
-                  <p className={`text-xs mt-1 ${selectedDealer?.id === d.id ? 'text-cyan-100' : 'text-gray-400'} flex items-center gap-1`}>
+                  <p className="font-bold dark:text-white">{d.name}</p>
+                  <p className={`text-xs mt-1 ${selectedDealer?.id === d.id ? 'text-cyan-100' : 'text-gray-400 dark:text-dark-muted'} flex items-center gap-1`}>
                     <MapPin size={12} /> {d.address || (lang === 'bn' ? 'ঠিকানা নেই' : 'No address')}
                   </p>
                 </div>
                 <button 
                   onClick={(e) => { e.stopPropagation(); handleDeleteDealer(d.id); }}
-                  className={`${selectedDealer?.id === d.id ? 'text-cyan-800' : 'text-gray-300'} hover:text-red-500 transition-colors`}
+                  className={`${selectedDealer?.id === d.id ? 'text-cyan-800 dark:text-blue-900/50' : 'text-gray-300 dark:text-dark-muted hover:text-red-500'} transition-colors`}
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             </motion.div>
           ))}
-          {dealers.length === 0 && <p className="text-center text-gray-400 py-10 italic">{lang === 'bn' ? 'কোন ডিলার যোগ করা হয়নি' : 'No dealers added'}</p>}
+          {dealers.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic">{lang === 'bn' ? 'কোন ডিলার যোগ করা হয়নি' : 'No dealers added'}</p>}
         </div>
       </div>
 
@@ -138,32 +138,32 @@ export default function DealerManager({ lang }: { lang: Language }) {
               className="space-y-6 lg:space-y-8"
             >
               {/* Dealer Profile Card */}
-              <div className="bg-white p-6 lg:p-8 rounded-3xl border border-gray-100">
+              <div className="bg-white dark:bg-dark-surface p-6 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <button 
                       onClick={() => setSelectedDealer(null)}
-                      className="lg:hidden p-2 text-gray-400 bg-gray-50 rounded-full"
+                      className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-full"
                     >
                       <ChevronRight className="rotate-180" size={20} />
                     </button>
                     <div>
-                      <h1 className="text-2xl lg:text-3xl font-black text-ink mb-1">{selectedDealer.name}</h1>
+                      <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white mb-1">{selectedDealer.name}</h1>
                       <div className="flex flex-wrap gap-3 text-xs lg:text-sm">
-                        <span className="flex items-center gap-1.5 text-gray-500 bg-gray-50 px-3 py-1 lg:py-1.5 rounded-full">
-                          <MapPin size={14} className="text-cyan-600" />
+                        <span className="flex items-center gap-1.5 text-gray-500 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg px-3 py-1 lg:py-1.5 rounded-full">
+                          <MapPin size={14} className="text-cyan-600 dark:text-cyan-400" />
                           {selectedDealer.address}
                         </span>
-                        <span className="flex items-center gap-1.5 text-gray-500 bg-gray-50 px-3 py-1 lg:py-1.5 rounded-full">
-                          <Phone size={14} className="text-cyan-600" />
+                        <span className="flex items-center gap-1.5 text-gray-500 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg px-3 py-1 lg:py-1.5 rounded-full">
+                          <Phone size={14} className="text-cyan-600 dark:text-cyan-400" />
                           {selectedDealer.phone}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="hidden md:flex gap-2">
-                    <div className="p-4 bg-cyan-50 rounded-2xl flex items-center justify-center">
-                       <Users className="w-8 h-8 text-cyan-600" />
+                    <div className="p-4 bg-cyan-50 dark:bg-cyan-900/30 rounded-2xl flex items-center justify-center">
+                       <Users className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />
                     </div>
                   </div>
                 </div>
@@ -171,7 +171,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
 
               {/* Water Sales Section */}
               <div className="grid grid-cols-1 gap-8">
-                <div className="bg-white p-4 lg:p-8 rounded-3xl border border-gray-100 shadow-sm">
+                <div className="bg-white dark:bg-dark-surface p-4 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm">
                   <SalesRecorder dealerId={selectedDealer.id} lang={lang} />
                 </div>
               </div>
@@ -250,7 +250,7 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
     date: new Date().toISOString().split('T')[0], 
     productType: '20L Jar' as '20L Jar' | '5L Bottle' | 'Other', 
     quantity: 0, 
-    rate: 0 
+    unitPrice: 0 
   });
 
   useEffect(() => {
@@ -268,7 +268,7 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const totalAmount = form.quantity * form.rate;
+    const totalAmount = form.quantity * form.unitPrice;
     try {
       await addDoc(collection(db, 'water_sales'), {
         ...form,
@@ -277,7 +277,7 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
         createdAt: serverTimestamp()
       });
       setShowAdd(false);
-      setForm({ ...form, quantity: 0 }); 
+      setForm({ ...form, quantity: 0, unitPrice: 0 }); 
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'water_sales');
     }
@@ -297,15 +297,17 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-gray-50 pb-4">
-        <h3 className="text-lg lg:text-xl font-bold flex items-center gap-2">
-          <Droplets className="text-blue-500" />
+      <div className="flex items-center justify-between border-b border-gray-50 dark:border-dark-border pb-4">
+        <h3 className="text-lg lg:text-xl font-bold flex items-center gap-2 dark:text-white">
+          <Droplets className="text-blue-500 dark:text-blue-400" />
           {t.waterSalesRecord}
         </h3>
         <button 
           onClick={() => setShowAdd(!showAdd)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-            showAdd ? 'bg-ink text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+            showAdd 
+              ? 'bg-ink dark:bg-blue-600 text-white' 
+              : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50'
           }`}
         >
           {showAdd ? <X size={16} /> : <Plus size={16} />}
@@ -320,29 +322,29 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 lg:p-6 bg-gray-50 rounded-2xl overflow-hidden"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 lg:p-6 bg-gray-50 dark:bg-dark-bg/50 rounded-2xl overflow-hidden"
           >
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.date}</label>
-              <input type="date" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl text-sm" />
+              <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.date}</label>
+              <input type="date" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full mt-1 px-3 py-2 border dark:border-dark-border bg-white dark:bg-dark-surface rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.product}</label>
-              <select value={form.productType} onChange={e => setForm({...form, productType: e.target.value as any})} className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl text-sm">
+              <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.product}</label>
+              <select value={form.productType} onChange={e => setForm({...form, productType: e.target.value as any})} className="w-full mt-1 px-3 py-2 border dark:border-dark-border bg-white dark:bg-dark-surface rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
                 <option value="20L Jar">{lang === 'bn' ? '২০ লিটার যার' : '20L Jar'}</option>
                 <option value="5L Bottle">{lang === 'bn' ? '৫ লিটার বোতল' : '5L Bottle'}</option>
                 <option value="Other">{lang === 'bn' ? 'অন্যান্য' : 'Other'}</option>
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.quantity}</label>
-              <input type="number" required placeholder="0" value={form.quantity || ''} onChange={e => setForm({...form, quantity: Number(e.target.value)})} className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl text-sm" />
+              <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.quantity}</label>
+              <input type="number" required placeholder="0" value={form.quantity || ''} onChange={e => setForm({...form, quantity: Number(e.target.value)})} className="w-full mt-1 px-3 py-2 border dark:border-dark-border bg-white dark:bg-dark-surface rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.rate} (৳)</label>
+              <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.unitPrice} (৳)</label>
               <div className="flex gap-2">
-                <input type="number" required placeholder="0" value={form.rate || ''} onChange={e => setForm({...form, rate: Number(e.target.value)})} className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-xl text-sm" />
-                <button type="submit" className="bg-ink text-white px-4 py-2 mt-1 rounded-xl text-xs font-bold">{t.save}</button>
+                <input type="number" required placeholder="0" value={form.unitPrice || ''} onChange={e => setForm({...form, unitPrice: Number(e.target.value)})} className="w-full mt-1 px-3 py-2 border dark:border-dark-border bg-white dark:bg-dark-surface rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+                <button type="submit" className="bg-ink dark:bg-blue-600 text-white px-4 py-2 mt-1 rounded-xl text-xs font-bold hover:bg-black dark:hover:bg-blue-700 transition-colors uppercase tracking-wider">{t.save}</button>
               </div>
             </div>
           </motion.form>
@@ -352,30 +354,30 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
       <div className="overflow-x-auto -mx-4 lg:mx-0">
         <table className="w-full">
           <thead>
-            <tr className="text-left bg-gray-50/50">
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.date}</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.product}</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">{t.quantity}</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">{t.rate} (৳)</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">{t.total} (৳)</th>
+            <tr className="text-left bg-gray-50/50 dark:bg-dark-bg/50">
+              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.date}</th>
+              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.product}</th>
+              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-center">{t.quantity}</th>
+              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.unitPrice} (৳)</th>
+              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.total} (৳)</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
             {sales.map(sale => (
-              <tr key={sale.id} className="group hover:bg-gray-50/50 transition-colors">
-                <td className="px-4 py-4 text-[10px] lg:text-xs font-medium text-gray-400">{sale.date}</td>
-                <td className="px-4 py-4 text-xs font-bold text-ink">
+              <tr key={sale.id} className="group hover:bg-gray-50/50 dark:hover:bg-dark-bg/50 transition-colors">
+                <td className="px-4 py-4 text-[10px] lg:text-xs font-medium text-gray-400 dark:text-dark-muted">{sale.date}</td>
+                <td className="px-4 py-4 text-xs font-bold text-ink dark:text-white">
                     <div className="flex items-center gap-2">
                        <div className={`w-1.5 h-1.5 rounded-full ${sale.productType === '20L Jar' ? 'bg-blue-500' : 'bg-cyan-500'}`} />
                        {sale.productType}
                     </div>
                 </td>
-                <td className="px-4 py-4 text-xs text-center font-bold font-mono">{sale.quantity}</td>
-                <td className="px-4 py-4 text-xs text-right font-mono text-gray-500">৳{sale.rate.toLocaleString()}</td>
-                <td className="px-4 py-4 text-xs text-right font-black font-mono pr-2 text-emerald-600">৳{sale.totalAmount.toLocaleString()}</td>
+                <td className="px-4 py-4 text-xs text-center font-bold font-mono dark:text-white">{sale.quantity}</td>
+                <td className="px-4 py-4 text-xs text-right font-mono text-gray-500 dark:text-dark-muted">৳{sale.unitPrice.toLocaleString()}</td>
+                <td className="px-4 py-4 text-xs text-right font-black font-mono pr-2 text-emerald-600 dark:text-emerald-400">৳{sale.totalAmount.toLocaleString()}</td>
                 <td className="px-4 py-4 text-right">
-                   <button onClick={() => deleteSale(sale.id)} className="text-gray-200 hover:text-red-500 transition-all">
+                   <button onClick={() => deleteSale(sale.id)} className="text-gray-200 dark:text-dark-muted hover:text-red-500 transition-all">
                       <Trash2 size={14} />
                    </button>
                 </td>
@@ -383,21 +385,21 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
             ))}
           </tbody>
         </table>
-        {sales.length === 0 && <p className="text-center text-gray-400 py-10 italic text-sm">{t.noSalesReport}</p>}
+        {sales.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic text-sm">{t.noSalesReport}</p>}
       </div>
 
       {/* Sales Summary Section */}
       {sales.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-gray-100">
-          <div className="bg-blue-50/50 p-4 lg:p-6 rounded-2xl border border-blue-100/50">
-            <p className="text-blue-600 text-[10px] font-bold uppercase tracking-widest mb-1">{t.totalSold}</p>
-            <p className="text-lg lg:text-xl font-black text-blue-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-gray-100 dark:border-dark-border">
+          <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 lg:p-6 rounded-2xl border border-blue-100/50 dark:border-blue-900/30">
+            <p className="text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-widest mb-1">{t.totalSold}</p>
+            <p className="text-lg lg:text-xl font-black text-blue-700 dark:text-blue-300">
               {totalQuantity.toLocaleString()} <span className="text-xs font-normal">{lang === 'bn' ? 'টি/যার' : 'Pcs/Jar'}</span>
             </p>
           </div>
-          <div className="bg-emerald-50/50 p-4 lg:p-6 rounded-2xl border border-emerald-100/50">
-            <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest mb-1">{t.totalEarned}</p>
-            <p className="text-lg lg:text-xl font-black text-emerald-700">
+          <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 lg:p-6 rounded-2xl border border-emerald-100/50 dark:border-emerald-900/30">
+            <p className="text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-1">{t.totalEarned}</p>
+            <p className="text-lg lg:text-xl font-black text-emerald-700 dark:text-emerald-300">
               ৳{totalAmount.toLocaleString()}
             </p>
           </div>
