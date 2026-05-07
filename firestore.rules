@@ -16,11 +16,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && 
-        request.auth.token.keys().hasAll(['email']) && (
-          request.auth.token.email.lower() == "ahmedhussainpavel@gmail.com" ||
-          request.auth.token.email.lower() == "miladdrinkingwater@gmail.com"
-        );
+      return isSignedIn();
     }
 
     function isValidId(id) {
