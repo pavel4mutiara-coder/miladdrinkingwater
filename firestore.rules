@@ -8,19 +8,23 @@ service cloud.firestore {
 
     // --- Helpers ---
     function isSignedIn() {
-      return true;
+      return request.auth != null;
     }
 
     function isVerified() {
-      return true;
+      return isSignedIn() && request.auth.token.email_verified == true;
     }
 
     function isAdmin() {
-      return true;
+      return isSignedIn() && 
+        request.auth.token.keys().hasAll(['email']) && (
+          request.auth.token.email.lower() == "ahmedhussainpavel@gmail.com" ||
+          request.auth.token.email.lower() == "miladdrinkingwater@gmail.com"
+        );
     }
 
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+       return id is string && id.size() > 0 && id.size() <= 128;
     }
 
     function incoming() {
@@ -34,107 +38,181 @@ service cloud.firestore {
     // --- Validation Blueprints ---
 
     function isValidVehicle(data) {
-      return data.keys().hasAll(['vehicleNumber', 'name', 'type', 'createdAt']) &&
-             data.vehicleNumber is string && data.vehicleNumber.size() > 0 && data.vehicleNumber.size() <= 50 &&
-             data.name is string && data.name.size() <= 100 &&
-             data.type is string && data.type.size() <= 50 &&
-             data.createdAt is timestamp;
+      return data.keys().hasAll(['vehicleNumber', 'name', 'type']) &&
+             data.vehicleNumber is string && data.vehicleNumber.size() > 0 &&
+             data.name is string &&
+             data.type is string &&
+             (data.registrationNumber == null || data.registrationNumber is string) &&
+             (data.imageURL == null || data.imageURL is string) &&
+             (data.fitnessDate == null || data.fitnessDate is string) &&
+             (data.insuranceDate == null || data.insuranceDate is string) &&
+             (data.taxTokenDate == null || data.taxTokenDate is string) &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
     }
 
     function isValidMaintenance(data) {
-      return data.keys().hasAll(['vehicleId', 'date', 'description', 'createdAt']) &&
-             data.vehicleId is string && data.vehicleId.size() <= 128 &&
-             data.date is string && data.date.size() <= 20 &&
-             data.description is string && data.description.size() <= 1000 &&
-             data.createdAt is timestamp;
+      return data.keys().hasAll(['vehicleId', 'date', 'description']) &&
+             data.vehicleId is string &&
+             data.date is string &&
+             data.description is string &&
+             (data.mechanicName == null || data.mechanicName is string) &&
+             (data.sparePartsCost == null || data.sparePartsCost is number) &&
+             (data.nextServiceDate == null || data.nextServiceDate is string) &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
     }
 
     function isValidVehicleIncome(data) {
-      return data.keys().hasAll(['vehicleId', 'date', 'amount', 'createdAt']) &&
-             data.vehicleId is string && data.vehicleId.size() <= 128 &&
-             data.date is string && data.date.size() <= 20 &&
+      return data.keys().hasAll(['vehicleId', 'date', 'amount']) &&
+             data.vehicleId is string &&
+             data.date is string &&
              data.amount is number &&
-             data.createdAt is timestamp;
+             (data.driverName == null || data.driverName is string) &&
+             (data.routeDetails == null || data.routeDetails is string) &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
     }
 
     function isValidDealer(data) {
-      return data.keys().hasAll(['name', 'createdAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             data.createdAt is timestamp;
+      return data.keys().hasAll(['name']) &&
+             data.name is string && data.name.size() > 0 &&
+             (data.address == null || data.address is string) &&
+             (data.phone == null || data.phone is string) &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
     }
 
     function isValidWaterSale(data) {
-      return data.keys().hasAll(['dealerId', 'date', 'productType', 'quantity', 'unitPrice', 'totalAmount', 'createdAt']) &&
-             data.dealerId is string && data.dealerId.size() <= 128 &&
-             data.date is string && data.date.size() <= 20 &&
-             data.productType in ['20L Jar', '5L Bottle', 'Other'] &&
+      return data.dealerId is string &&
+             data.date is string &&
+             data.productType is string &&
              data.quantity is number &&
              data.unitPrice is number &&
              data.totalAmount is number &&
-             data.createdAt is timestamp;
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time) &&
+             (data.updatedAt == null || data.updatedAt is timestamp || data.updatedAt == request.time);
     }
 
     function isValidCompanyExpense(data) {
-      return data.keys().hasAll(['date', 'category', 'amount', 'createdAt']) &&
-             data.date is string && data.date.size() <= 20 &&
-             data.category is string && data.category.size() <= 100 &&
+      return data.keys().hasAll(['date', 'category', 'amount']) &&
+             data.date is string &&
+             data.category is string &&
              data.amount is number &&
-             data.createdAt is timestamp;
+             (data.dealerId == null || data.dealerId is string) &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
     }
 
     function isValidExpenseCategory(data) {
-      return data.keys().hasAll(['name', 'createdAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             data.createdAt is timestamp;
+      return data.keys().hasAll(['name']) &&
+             data.name is string &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
+    }
+
+    function isValidDriver(data) {
+      return data.keys().hasAll(['name', 'phone', 'nid']) &&
+             data.name is string &&
+             data.phone is string &&
+             data.nid is string &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
+    }
+
+    function isValidCNG(data) {
+      return data.keys().hasAll(['cngNumber', 'driverId', 'dailyPayment']) &&
+             data.cngNumber is string &&
+             data.driverId is string &&
+             data.dailyPayment is number &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
+    }
+
+    function isValidCNGIncome(data) {
+      return data.keys().hasAll(['cngId', 'date', 'amount']) &&
+             data.cngId is string &&
+             data.date is string &&
+             data.amount is number &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
+    }
+
+    function isValidCNGExpense(data) {
+      return data.keys().hasAll(['cngId', 'date', 'type', 'amount']) &&
+             data.cngId is string &&
+             data.date is string &&
+             data.type is string &&
+             data.amount is number &&
+             (data.createdAt == null || data.createdAt is timestamp || data.createdAt == request.time);
     }
 
     // --- Rules ---
 
+    match /drivers/{driverId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidDriver(incoming());
+      allow update: if isAdmin() && isValidDriver(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /cng_rickshaws/{cngId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidCNG(incoming());
+      allow update: if isAdmin() && isValidCNG(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /cng_income/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidCNGIncome(incoming());
+      allow update: if isAdmin() && isValidCNGIncome(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /cng_expenses/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidCNGExpense(incoming());
+      allow update: if isAdmin() && isValidCNGExpense(incoming());
+      allow delete: if isAdmin();
+    }
+
     match /vehicles/{vehicleId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin() && isValidVehicle(incoming()) && isValidId(vehicleId);
+      allow create: if isAdmin() && isValidVehicle(incoming());
       allow update: if isAdmin() && isValidVehicle(incoming());
       allow delete: if isAdmin();
     }
 
     match /maintenance/{mainId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin() && isValidMaintenance(incoming()) && isValidId(mainId);
+      allow create: if isAdmin() && isValidMaintenance(incoming());
       allow update: if isAdmin() && isValidMaintenance(incoming());
       allow delete: if isAdmin();
     }
 
     match /vehicle_income/{incomeId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin() && isValidVehicleIncome(incoming()) && isValidId(incomeId);
+      allow create: if isAdmin() && isValidVehicleIncome(incoming());
       allow update: if isAdmin() && isValidVehicleIncome(incoming());
       allow delete: if isAdmin();
     }
 
     match /dealers/{dealerId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin() && isValidDealer(incoming()) && isValidId(dealerId);
+      allow create: if isAdmin() && isValidDealer(incoming());
       allow update: if isAdmin() && isValidDealer(incoming());
       allow delete: if isAdmin();
     }
 
     match /water_sales/{saleId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin() && isValidWaterSale(incoming()) && isValidId(saleId);
+      allow create: if isAdmin() && isValidWaterSale(incoming());
       allow update: if isAdmin() && isValidWaterSale(incoming());
       allow delete: if isAdmin();
     }
 
     match /company_expenses/{expId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin() && isValidCompanyExpense(incoming()) && isValidId(expId);
+      allow create: if isAdmin() && isValidCompanyExpense(incoming());
       allow update: if isAdmin() && isValidCompanyExpense(incoming());
       allow delete: if isAdmin();
     }
 
     match /expense_categories/{catId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin() && isValidExpenseCategory(incoming()) && isValidId(catId);
+      allow create: if isAdmin() && isValidExpenseCategory(incoming());
       allow update: if isAdmin() && isValidExpenseCategory(incoming());
       allow delete: if isAdmin();
     }

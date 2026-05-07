@@ -30,6 +30,7 @@ import {
 } from 'recharts';
 import { Vehicle, Maintenance, VehicleIncome } from '../types';
 import { translations, Language } from '../locales';
+import ImageUpload from './ui/ImageUpload';
 
 export default function VehicleManager({ lang }: { lang: Language }) {
   const t = translations[lang];
@@ -37,8 +38,18 @@ export default function VehicleManager({ lang }: { lang: Language }) {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isAddingVehicle, setIsAddingVehicle] = useState(false);
   const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newVehicle, setNewVehicle] = useState({ vehicleNumber: '', name: '', type: '' });
+  const [newVehicle, setNewVehicle] = useState({ 
+    vehicleNumber: '', 
+    name: '', 
+    type: '',
+    imageURL: '',
+    registrationNumber: '',
+    fitnessDate: '',
+    insuranceDate: '',
+    taxTokenDate: ''
+  });
 
   useEffect(() => {
     const q = query(collection(db, 'vehicles'), orderBy('createdAt', 'desc'));
@@ -50,7 +61,8 @@ export default function VehicleManager({ lang }: { lang: Language }) {
 
   const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVehicle.vehicleNumber) return;
+    if (!newVehicle.vehicleNumber || isSaving) return;
+    setIsSaving(true);
     try {
       if (editingVehicleId) {
         await updateDoc(doc(db, 'vehicles', editingVehicleId), {
@@ -63,16 +75,37 @@ export default function VehicleManager({ lang }: { lang: Language }) {
           createdAt: serverTimestamp()
         });
       }
-      setNewVehicle({ vehicleNumber: '', name: '', type: '' });
+      setNewVehicle({ 
+        vehicleNumber: '', 
+        name: '', 
+        type: '',
+        imageURL: '',
+        registrationNumber: '',
+        fitnessDate: '',
+        insuranceDate: '',
+        taxTokenDate: ''
+      });
       setIsAddingVehicle(false);
       setEditingVehicleId(null);
     } catch (err) {
+      alert(lang === 'bn' ? 'গাড়ির তথ্য সংরক্ষণ করতে সমস্যা হয়েছে।' : 'Failed to save vehicle.');
       handleFirestoreError(err, editingVehicleId ? OperationType.UPDATE : OperationType.CREATE, 'vehicles');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleEditVehicle = (v: Vehicle) => {
-    setNewVehicle({ vehicleNumber: v.vehicleNumber, name: v.name, type: v.type });
+    setNewVehicle({ 
+      vehicleNumber: v.vehicleNumber, 
+      name: v.name, 
+      type: v.type,
+      imageURL: v.imageURL || '',
+      registrationNumber: v.registrationNumber || '',
+      fitnessDate: v.fitnessDate || '',
+      insuranceDate: v.insuranceDate || '',
+      taxTokenDate: v.taxTokenDate || ''
+    });
     setEditingVehicleId(v.id);
     setIsAddingVehicle(true);
   };
@@ -83,6 +116,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
       await deleteDoc(doc(db, 'vehicles', id));
       if (selectedVehicle?.id === id) setSelectedVehicle(null);
     } catch (err) {
+      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete.');
       handleFirestoreError(err, OperationType.DELETE, 'vehicles');
     }
   };
@@ -166,23 +200,47 @@ export default function VehicleManager({ lang }: { lang: Language }) {
           </div>
         ) : (
           <div className="space-y-6 lg:space-y-8 pb-10">
-            <div className="bg-white dark:bg-dark-surface p-6 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+            <div className="bg-white dark:bg-dark-surface p-6 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 dark:bg-blue-900/10 rounded-bl-full -mr-10 -mt-10 opacity-50" />
-               <div className="flex items-center gap-4">
-                 <button 
-                   onClick={() => setSelectedVehicle(null)}
-                   className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-full"
-                 >
-                   <ChevronRight className="rotate-180" size={20} />
-                 </button>
-                 <div>
-                    <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white mb-1">{selectedVehicle.vehicleNumber}</h1>
-                    <p className="text-gray-500 dark:text-dark-muted text-sm lg:text-base font-medium">{selectedVehicle.name} • {selectedVehicle.type}</p>
-                 </div>
+               
+               <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-3xl bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-dark-border overflow-hidden flex items-center justify-center shrink-0">
+                  {selectedVehicle.imageURL ? (
+                    <img src={selectedVehicle.imageURL} className="w-full h-full object-cover" alt={selectedVehicle.name} />
+                  ) : (
+                    <Truck className="text-gray-200 dark:text-dark-muted w-12 h-12" />
+                  )}
                </div>
-               <div className="text-right hidden md:block">
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.location}</p>
-                  <p className="text-ink dark:text-white font-medium text-sm">{t.address}</p>
+
+               <div className="flex-1 w-full">
+                  <div className="flex items-center gap-4 mb-2">
+                    <button 
+                      onClick={() => setSelectedVehicle(null)}
+                      className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-full"
+                    >
+                      <ChevronRight className="rotate-180" size={20} />
+                    </button>
+                    <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white">{selectedVehicle.vehicleNumber}</h1>
+                  </div>
+                  <p className="text-gray-500 dark:text-dark-muted text-sm lg:text-base font-bold mb-4">{selectedVehicle.name} • {selectedVehicle.type}</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                     <div className="p-2 px-3 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-100 dark:border-dark-border">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{t.regNumber}</p>
+                        <p className="text-[10px] font-black dark:text-white truncate">{selectedVehicle.registrationNumber || 'N/A'}</p>
+                     </div>
+                     <div className="p-2 px-3 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-100 dark:border-dark-border">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest text-emerald-500">{t.fitnessDate}</p>
+                        <p className="text-[10px] font-black dark:text-white truncate">{selectedVehicle.fitnessDate || 'N/A'}</p>
+                     </div>
+                     <div className="p-2 px-3 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-100 dark:border-dark-border">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest text-blue-500">{t.insuranceDate}</p>
+                        <p className="text-[10px] font-black dark:text-white truncate">{selectedVehicle.insuranceDate || 'N/A'}</p>
+                     </div>
+                     <div className="p-2 px-3 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-100 dark:border-dark-border">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest text-orange-500">{t.taxToken}</p>
+                        <p className="text-[10px] font-black dark:text-white truncate">{selectedVehicle.taxTokenDate || 'N/A'}</p>
+                     </div>
+                  </div>
                </div>
             </div>
 
@@ -199,9 +257,11 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   noDataMessage={t.noMaintenanceRecord}
                   fields={[
                     { name: 'date', label: t.date, type: 'date' },
-                    { name: 'partsReplaced', label: t.parts, type: 'text' },
+                    { name: 'mechanicName', label: t.mechanic, type: 'text' },
                     { name: 'description', label: t.description, type: 'text' },
-                    { name: 'cost', label: t.amount, type: 'number' }
+                    { name: 'sparePartsCost', label: t.spareParts, type: 'number' },
+                    { name: 'cost', label: t.total, type: 'number' },
+                    { name: 'nextServiceDate', label: t.nextService, type: 'date' }
                   ]}
                />
                <VehicleLogSection 
@@ -213,6 +273,8 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   noDataMessage={t.noIncomeRecord}
                   fields={[
                     { name: 'date', label: t.date, type: 'date' },
+                    { name: 'driverName', label: t.driverName, type: 'text' },
+                    { name: 'routeDetails', label: t.route, type: 'text' },
                     { name: 'amount', label: t.amount, type: 'number' }
                   ]}
                />
@@ -229,7 +291,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative"
+              className="bg-white dark:bg-dark-surface rounded-[40px] p-8 lg:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border"
             >
               <button 
                 onClick={() => {
@@ -237,49 +299,98 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   setEditingVehicleId(null);
                   setNewVehicle({ vehicleNumber: '', name: '', type: '' });
                 }}
-                className="absolute top-6 right-6 text-gray-400 hover:text-ink"
+                className="absolute top-8 right-8 text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full"
               >
-                <X />
+                <X size={20} />
               </button>
-              <h2 className="text-2xl font-bold mb-6 text-ink">
+              <h2 className="text-2xl lg:text-3xl font-black mb-8 dark:text-white">
                 {editingVehicleId ? t.editVehicle : t.addVehicle}
               </h2>
-              <form onSubmit={handleAddVehicle} className="space-y-4">
-                 <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.vehicleNumber}</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={newVehicle.vehicleNumber} 
-                      onChange={e => setNewVehicle({...newVehicle, vehicleNumber: e.target.value})} 
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:border-blue-500"
-                      placeholder="e.g. D-123"
-                    />
+              <form onSubmit={handleAddVehicle} className="space-y-4 max-h-[85vh] overflow-y-auto px-1 custom-scrollbar">
+                  <ImageUpload 
+                    label="Vehicle Photo"
+                    currentImageUrl={newVehicle.imageURL}
+                    onUploadComplete={(url) => setNewVehicle({...newVehicle, imageURL: url})}
+                    onRemove={() => setNewVehicle({...newVehicle, imageURL: ''})}
+                    folder="vehicles"
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1 col-span-2">
+                       <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.vehicleNumber}</label>
+                       <input 
+                         required
+                         type="text" 
+                         value={newVehicle.vehicleNumber} 
+                         onChange={e => setNewVehicle({...newVehicle, vehicleNumber: e.target.value})} 
+                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm"
+                         placeholder="e.g. D-123"
+                       />
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.vehicleName}</label>
+                       <input 
+                         required
+                         type="text" 
+                         value={newVehicle.name} 
+                         onChange={e => setNewVehicle({...newVehicle, name: e.target.value})} 
+                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm"
+                         placeholder="e.g. Pickup"
+                       />
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.vehicleType}</label>
+                       <input 
+                         required
+                         type="text" 
+                         value={newVehicle.type} 
+                         onChange={e => setNewVehicle({...newVehicle, type: e.target.value})} 
+                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm"
+                         placeholder="e.g. Mini Truck"
+                       />
+                    </div>
+                    <div className="space-y-1 col-span-2">
+                       <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.regNumber}</label>
+                       <input 
+                         type="text" 
+                         value={newVehicle.registrationNumber} 
+                         onChange={e => setNewVehicle({...newVehicle, registrationNumber: e.target.value})} 
+                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none dark:text-white text-sm"
+                       />
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.fitnessDate}</label>
+                       <input 
+                         type="date" 
+                         value={newVehicle.fitnessDate} 
+                         onChange={e => setNewVehicle({...newVehicle, fitnessDate: e.target.value})} 
+                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none dark:text-white text-sm"
+                       />
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.insuranceDate}</label>
+                       <input 
+                         type="date" 
+                         value={newVehicle.insuranceDate} 
+                         onChange={e => setNewVehicle({...newVehicle, insuranceDate: e.target.value})} 
+                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none dark:text-white text-sm"
+                       />
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.taxToken}</label>
+                       <input 
+                         type="date" 
+                         value={newVehicle.taxTokenDate} 
+                         onChange={e => setNewVehicle({...newVehicle, taxTokenDate: e.target.value})} 
+                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none dark:text-white text-sm"
+                       />
+                    </div>
                  </div>
-                 <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.vehicleName}</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={newVehicle.name} 
-                      onChange={e => setNewVehicle({...newVehicle, name: e.target.value})} 
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:border-blue-500"
-                      placeholder="e.g. Pickup"
-                    />
-                 </div>
-                 <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.vehicleType}</label>
-                    <input 
-                      required
-                      type="text" 
-                      value={newVehicle.type} 
-                      onChange={e => setNewVehicle({...newVehicle, type: e.target.value})} 
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:border-blue-500"
-                      placeholder="e.g. Mini Truck"
-                    />
-                 </div>
-                 <button className="w-full bg-ink text-white py-4 rounded-2xl font-bold hover:bg-black transition-colors uppercase tracking-widest">
-                   {editingVehicleId ? t.update : t.save}
+                 <button 
+                   disabled={isSaving}
+                   className="w-full bg-ink dark:bg-blue-600 text-white py-4 rounded-xl font-bold mt-2 hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 sticky bottom-0 text-sm"
+                 >
+                   {isSaving ? (lang === 'bn' ? 'সেভ হচ্ছে...' : 'Saving...') : (editingVehicleId ? t.update : t.save)}
                  </button>
               </form>
             </motion.div>
@@ -440,9 +551,19 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
   const [localSearch, setLocalSearch] = useState('');
 
   useEffect(() => {
-    const q = query(collection(db, collectionName), where('vehicleId', '==', vehicleId), orderBy('date', 'desc'), orderBy('createdAt', 'desc'));
+    // Simplified query to avoid composite index requirements
+    const q = query(collection(db, collectionName), where('vehicleId', '==', vehicleId));
     const unsubscribe = onSnapshot(q, (snap) => {
-      setLogs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      // Sort in memory
+      data.sort((a, b) => {
+        const dateCompare = (b.date || "").localeCompare(a.date || "");
+        if (dateCompare !== 0) return dateCompare;
+        const aTime = (a.createdAt as any)?.toMillis?.() || 0;
+        const bTime = (b.createdAt as any)?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
+      setLogs(data);
     }, (err) => handleFirestoreError(err, OperationType.LIST, collectionName));
     return () => unsubscribe();
   }, [vehicleId, collectionName]);
@@ -460,6 +581,7 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
       setNewData({ date: new Date().toISOString().split('T')[0] });
       setShowAdd(false);
     } catch (err) {
+      alert(lang === 'bn' ? 'তথ্যাদি সেভ করতে সমস্যা হয়েছে।' : 'Failed to save record.');
       handleFirestoreError(err, OperationType.CREATE, collectionName);
     }
   };
@@ -469,6 +591,7 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
     try {
       await deleteDoc(doc(db, collectionName, id));
     } catch (err) {
+      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete record.');
       handleFirestoreError(err, OperationType.DELETE, collectionName);
     }
   };

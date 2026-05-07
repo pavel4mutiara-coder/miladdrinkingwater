@@ -113,13 +113,17 @@ export default function Dashboard({ lang }: { lang: Language }) {
       </section>
       
       {/* Location Badge */}
-      <footer className="pt-6 lg:pt-8 border-t border-gray-100 dark:border-dark-border flex flex-col md:flex-row justify-between items-start md:items-end gap-4 opacity-50 dark:opacity-80">
+      <footer className="pt-6 lg:pt-8 border-t border-gray-100 dark:border-dark-border grid grid-cols-1 md:grid-cols-3 gap-6 opacity-60 dark:opacity-80">
         <div>
-           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-dark-muted">{t.location}</p>
+           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-dark-muted mb-1">{t.location}</p>
            <p className="text-xs lg:text-sm font-medium dark:text-white">{t.address}</p>
         </div>
+        <div>
+           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-dark-muted mb-1">{t.email}</p>
+           <p className="text-xs lg:text-sm font-medium dark:text-white">miladdrinkingwater@gmail.com</p>
+        </div>
         <div className="md:text-right">
-           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-dark-muted">{t.company}</p>
+           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-dark-muted mb-1">{t.company}</p>
            <p className="text-xs lg:text-sm font-medium dark:text-white">{t.appName}</p>
         </div>
       </footer>

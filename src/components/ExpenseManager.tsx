@@ -12,7 +12,8 @@ import {
   TrendingDown,
   X,
   ChevronDown,
-  Search
+  Search,
+  Users
 } from 'lucide-react';
 import { CompanyExpense, ExpenseCategory } from '../types';
 import { translations, Language } from '../locales';
@@ -21,6 +22,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
   const t = translations[lang];
   const [expenses, setExpenses] = useState<CompanyExpense[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+  const [dealers, setDealers] = useState<any[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [isManagingCategories, setIsManagingCategories] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,13 +30,25 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
     date: new Date().toISOString().split('T')[0], 
     category: '', 
     description: '', 
-    amount: 0 
+    amount: 0,
+    dealerId: ''
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, 'company_expenses'), orderBy('date', 'desc'), orderBy('createdAt', 'desc'));
-    const unsubscribeExpenses = onSnapshot(q, (snap) => {
-      setExpenses(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyExpense)));
+    // Simplified query to avoid composite index requirements
+    const qExpenses = query(collection(db, 'company_expenses'));
+    const unsubscribeExpenses = onSnapshot(qExpenses, (snap) => {
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyExpense));
+      // Sort in memory
+      data.sort((a, b) => {
+        const dateCompare = (b.date || "").localeCompare(a.date || "");
+        if (dateCompare !== 0) return dateCompare;
+        const aTime = (a.createdAt as any)?.toMillis?.() || 0;
+        const bTime = (b.createdAt as any)?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
+      setExpenses(data);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'company_expenses'));
 
     const qCat = query(collection(db, 'expense_categories'), orderBy('name', 'asc'));
@@ -46,24 +60,38 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
       }
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'expense_categories'));
 
+    const qDealers = query(collection(db, 'dealers'), orderBy('name', 'asc'));
+    const unsubscribeDealers = onSnapshot(qDealers, (snap) => {
+      setDealers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'dealers'));
+
     return () => {
       unsubscribeExpenses();
       unsubscribeCats();
+      unsubscribeDealers();
     };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
     try {
-      await addDoc(collection(db, 'company_expenses'), {
+      const expenseData: any = {
         ...newExpense,
         amount: Number(newExpense.amount),
         createdAt: serverTimestamp()
-      });
-      setNewExpense({ ...newExpense, description: '', amount: 0 });
+      };
+      if (!newExpense.dealerId) delete expenseData.dealerId;
+      
+      await addDoc(collection(db, 'company_expenses'), expenseData);
+      setNewExpense({ ...newExpense, description: '', amount: 0, dealerId: '' });
       setShowAdd(false);
     } catch (err) {
+      alert(lang === 'bn' ? 'খরচ রেকর্ড করতে সমস্যা হয়েছে।' : 'Failed to save expense.');
       handleFirestoreError(err, OperationType.CREATE, 'company_expenses');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -72,6 +100,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
     try {
       await deleteDoc(doc(db, 'company_expenses', id));
     } catch (err) {
+      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete expense.');
       handleFirestoreError(err, OperationType.DELETE, 'company_expenses');
     }
   };
@@ -157,27 +186,27 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden border-b border-gray-50 dark:border-dark-border bg-gray-50/30 dark:bg-dark-bg/30"
             >
-              <form onSubmit={handleSubmit} className="p-4 lg:p-8 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-                <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.date}</label>
+              <form onSubmit={handleSubmit} className="p-4 lg:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.date}</label>
                       <input 
                         type="date" 
                         required 
                         value={newExpense.date} 
                         onChange={e => setNewExpense({...newExpense, date: e.target.value})} 
-                        className="w-full px-4 py-2 lg:py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl text-sm dark:text-white" 
+                        className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/10" 
                       />
                    </div>
-                   <div className="space-y-1.5">
+                   <div className="space-y-1">
                       <div className="flex justify-between items-center">
-                        <label className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.category}</label>
+                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.category}</label>
                         <button 
                           type="button" 
                           onClick={() => setIsManagingCategories(true)}
                           className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline"
                         >
-                          {lang === 'bn' ? 'ম্যানেজ করুন' : 'Manage'}
+                          {lang === 'bn' ? 'ম্যানেজ' : 'Manage'}
                         </button>
                       </div>
                       <div className="relative">
@@ -185,7 +214,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
                           required
                           value={newExpense.category} 
                           onChange={e => setNewExpense({...newExpense, category: e.target.value})} 
-                          className="w-full px-4 py-2 lg:py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:text-white"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:text-white"
                         >
                           <option value="" disabled className="dark:bg-dark-surface">{lang === 'bn' ? 'নির্বাচন করুন' : 'Select Category'}</option>
                           {categories.map(c => <option key={c.id} value={c.name} className="dark:bg-dark-surface">{c.name}</option>)}
@@ -195,32 +224,46 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
                       </div>
                    </div>
                 </div>
-                <div className="space-y-4">
-                   <div className="space-y-1.5">
-                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.amount} (৳)</label>
+                <div className="space-y-3">
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.amount} (৳)</label>
                       <input 
                         type="number" 
                         required 
                         placeholder="0" 
                         value={newExpense.amount || ''} 
                         onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value)})} 
-                        className="w-full px-4 py-2 lg:py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl font-bold text-base lg:text-lg dark:text-white" 
+                        className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl font-bold dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/10" 
                       />
                    </div>
-                   <div className="space-y-1.5">
-                      <label className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.description}</label>
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.description}</label>
                       <input 
                         type="text" 
                         required 
-                        placeholder={lang === 'bn' ? "খরচের বিবরণ লিখুন..." : "Enter expense description..."} 
+                        placeholder={lang === 'bn' ? "খরচের বিবরণ..." : "Enter description..."} 
                         value={newExpense.description} 
                         onChange={e => setNewExpense({...newExpense, description: e.target.value})} 
-                        className="w-full px-4 py-2 lg:py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl text-sm dark:text-white" 
+                        className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/10" 
                       />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{lang === 'bn' ? 'ডিলার (ঐচ্ছিক)' : 'Dealer (Optional)'}</label>
+                      <div className="relative">
+                        <select 
+                          value={newExpense.dealerId} 
+                          onChange={e => setNewExpense({...newExpense, dealerId: e.target.value})} 
+                          className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/10 dark:text-white"
+                        >
+                          <option value="">{lang === 'bn' ? 'প্রযোজ্য নয়' : 'Not Applicable'}</option>
+                          {dealers.map(d => <option key={d.id} value={d.id} className="dark:bg-dark-surface">{d.name}</option>)}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted pointer-events-none" size={16} />
+                      </div>
                    </div>
                 </div>
                 <div className="md:col-span-2 pt-2">
-                   <button className="w-full py-3 lg:py-4 bg-ink dark:bg-blue-600 text-white rounded-xl lg:rounded-2xl font-bold hover:bg-black dark:hover:bg-blue-700 transition-all shadow-md">{t.save}</button>
+                   <button className="w-full py-3.5 bg-ink dark:bg-blue-600 text-white rounded-xl font-bold hover:bg-black dark:hover:bg-blue-700 transition-all shadow-md text-sm">{t.save}</button>
                 </div>
               </form>
             </motion.div>
@@ -245,7 +288,15 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
                   <td className="px-4 lg:px-8 py-4 lg:py-5">
                     <span className="text-[10px] lg:text-xs font-bold px-2 lg:px-2.5 py-0.5 lg:py-1 bg-gray-100 dark:bg-dark-bg rounded-full text-gray-600 dark:text-dark-muted">{exp.category}</span>
                   </td>
-                  <td className="px-4 lg:px-8 py-4 lg:py-5 text-xs lg:text-sm text-ink dark:text-white font-medium max-w-[120px] lg:max-w-xs truncate">{exp.description}</td>
+                  <td className="px-4 lg:px-8 py-4 lg:py-5 text-xs lg:text-sm text-ink dark:text-white font-medium max-w-[120px] lg:max-w-xs truncate">
+                    {exp.description}
+                    {exp.dealerId && (
+                      <span className="block text-[9px] text-blue-500 mt-1 font-bold">
+                        <Users size={8} className="inline mr-1" />
+                        {dealers.find(d => d.id === exp.dealerId)?.name || 'Unknown Dealer'}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 lg:px-8 py-4 lg:py-5 text-right font-black text-ink dark:text-white text-xs lg:text-sm">৳{exp.amount.toLocaleString()}</td>
                   <td className="px-4 lg:px-8 py-4 lg:py-5 text-right">
                     <button onClick={() => handleDelete(exp.id)} className="text-gray-200 dark:text-dark-muted hover:text-red-500 transition-all p-1">
@@ -290,6 +341,7 @@ function CategoryModal({ isOpen, onClose, categories, lang }: { isOpen: boolean,
       });
       setNewName('');
     } catch (err) {
+      alert(lang === 'bn' ? 'ক্যাটেগরি যোগ করতে সমস্যা হয়েছে।' : 'Failed to add category.');
       handleFirestoreError(err, OperationType.CREATE, 'expense_categories');
     }
   };
@@ -299,6 +351,7 @@ function CategoryModal({ isOpen, onClose, categories, lang }: { isOpen: boolean,
     try {
       await deleteDoc(doc(db, 'expense_categories', id));
     } catch (err) {
+      alert(lang === 'bn' ? 'ক্যাটেগরি ডিলিট করতে সমস্যা হয়েছে।' : 'Failed to delete category.');
       handleFirestoreError(err, OperationType.DELETE, 'expense_categories');
     }
   };

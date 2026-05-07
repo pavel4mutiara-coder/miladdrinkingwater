@@ -1,0 +1,424 @@
+import React, { useState, useEffect } from 'react';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { collection, query, onSnapshot, addDoc, deleteDoc, doc, updateDoc, orderBy, Timestamp, where } from 'firebase/firestore';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Plus, 
+  Trash2, 
+  Edit2, 
+  X, 
+  Save, 
+  DollarSign,
+  TrendingUp,
+  AlertCircle,
+  History,
+  Fuel,
+  Settings as SettingsIcon,
+  User as UserIcon,
+  Smartphone
+} from 'lucide-react';
+import { CNG, CNGIncome, CNGExpense, Driver } from '../types';
+import { translations, Language } from '../locales';
+
+interface CNGManagerProps {
+  lang: Language;
+}
+
+export default function CNGManager({ lang }: CNGManagerProps) {
+  const [cngs, setCngs] = useState<CNG[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [incomes, setIncomes] = useState<CNGIncome[]>([]);
+  const [expenses, setExpenses] = useState<CNGExpense[]>([]);
+  
+  const [selectedCng, setSelectedCng] = useState<CNG | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const t = translations[lang];
+
+  const [form, setForm] = useState({
+    cngNumber: '',
+    driverId: '',
+    dailyPayment: 0,
+    dueAmount: 0
+  });
+
+  const [incomeForm, setIncomeForm] = useState({ amount: 0, date: new Date().toISOString().split('T')[0] });
+  const [expenseForm, setExpenseForm] = useState({ amount: 0, date: new Date().toISOString().split('T')[0], type: 'Gas', description: '' });
+
+  useEffect(() => {
+    const qCng = query(collection(db, 'cng_rickshaws'), orderBy('createdAt', 'desc'));
+    const qDrivers = query(collection(db, 'drivers'), orderBy('name', 'asc'));
+    
+    const unsubCng = onSnapshot(qCng, (snapshot) => {
+      setCngs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CNG)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'cng_rickshaws'));
+
+    const unsubDrivers = onSnapshot(qDrivers, (snapshot) => {
+      setDrivers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Driver)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'drivers'));
+
+    return () => {
+      unsubCng();
+      unsubDrivers();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCng) return;
+
+    const qInc = query(collection(db, 'cng_income'), where('cngId', '==', selectedCng.id), orderBy('date', 'desc'));
+    const qExp = query(collection(db, 'cng_expenses'), where('cngId', '==', selectedCng.id), orderBy('date', 'desc'));
+
+    const unsubInc = onSnapshot(qInc, (snapshot) => {
+      setIncomes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CNGIncome)));
+    });
+    const unsubExp = onSnapshot(qExp, (snapshot) => {
+      setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CNGExpense)));
+    });
+
+    return () => {
+      unsubInc();
+      unsubExp();
+    };
+  }, [selectedCng]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'cng_rickshaws'), {
+        ...form,
+        createdAt: Timestamp.now()
+      });
+      setIsAdding(false);
+      setForm({ cngNumber: '', driverId: '', dailyPayment: 0, dueAmount: 0 });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'cng_rickshaws');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddIncome = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCng || isSaving) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'cng_income'), {
+        cngId: selectedCng.id,
+        ...incomeForm,
+        createdAt: Timestamp.now()
+      });
+      setIncomeForm({ amount: 0, date: new Date().toISOString().split('T')[0] });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'cng_income');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCng || isSaving) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'cng_expenses'), {
+        cngId: selectedCng.id,
+        ...expenseForm,
+        createdAt: Timestamp.now()
+      });
+      setExpenseForm({ amount: 0, date: new Date().toISOString().split('T')[0], type: 'Gas', description: '' });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'cng_expenses');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-8 h-full min-h-[600px]">
+      {/* Sidebar List */}
+      <div className="w-full lg:w-80 flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-black dark:text-white uppercase tracking-tight">{t.cng}</h2>
+          <button onClick={() => setIsAdding(true)} className="p-2 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
+            <Plus size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+          {cngs.map(cng => (
+            <button
+              key={cng.id}
+              onClick={() => setSelectedCng(cng)}
+              className={`w-full text-left p-5 rounded-[32px] border transition-all ${
+                selectedCng?.id === cng.id 
+                  ? 'bg-ink dark:bg-blue-600 border-ink dark:border-blue-500 text-white shadow-xl shadow-blue-600/10' 
+                  : 'bg-white dark:bg-dark-surface border-gray-50 dark:border-dark-border text-ink dark:text-white hover:bg-gray-50 dark:hover:bg-dark-bg'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-2xl ${selectedCng?.id === cng.id ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+                  <Smartphone className={selectedCng?.id === cng.id ? 'text-white' : 'text-blue-600 dark:text-blue-400'} size={24} />
+                </div>
+                <div>
+                  <p className="font-black text-lg">{cng.cngNumber}</p>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${selectedCng?.id === cng.id ? 'text-blue-200' : 'text-gray-400 dark:text-dark-muted'}`}>
+                    {drivers.find(d => d.id === cng.driverId)?.name || 'NO DRIVER'}
+                  </p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Details Area */}
+      <div className="flex-1">
+        <AnimatePresence mode="wait">
+          {selectedCng ? (
+            <motion.div
+              key={selectedCng.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <div className="bg-white dark:bg-dark-surface p-8 rounded-[40px] border border-gray-50 dark:border-dark-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-6 text-ink dark:text-white">
+                  <div className="w-16 h-16 bg-blue-600 rounded-[22px] flex items-center justify-center shadow-lg shadow-blue-600/20">
+                    <TrendingUp className="text-white" size={32} />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-black">{selectedCng.cngNumber}</h1>
+                     <div className="flex items-center gap-2 text-gray-400 dark:text-dark-muted text-sm font-bold">
+                        <UserIcon size={14} /> {drivers.find(d => d.id === selectedCng.driverId)?.name}
+                     </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t.dailyPayment}</p>
+                    <p className="text-2xl font-black text-ink dark:text-white">৳{selectedCng.dailyPayment.toLocaleString()}</p>
+                  </div>
+                  <div className="w-px h-10 bg-gray-100 dark:bg-dark-border mx-2 self-center" />
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em]">{t.dueAmount}</p>
+                    <p className="text-2xl font-black text-red-500">৳{selectedCng.dueAmount.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                {/* Income Section */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between px-2">
+                    <h3 className="font-black text-lg dark:text-white flex items-center gap-2">
+                       <DollarSign className="text-green-500" size={20} /> {t.cngIncome}
+                    </h3>
+                  </div>
+                  <div className="bg-white dark:bg-dark-surface p-6 rounded-3xl border border-gray-50 dark:border-dark-border">
+                    <form onSubmit={handleAddIncome} className="flex gap-3 mb-5">
+                       <input 
+                         type="date"
+                         value={incomeForm.date}
+                         onChange={(e) => setIncomeForm({...incomeForm, date: e.target.value})}
+                         className="flex-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-green-500/20 text-sm dark:text-white"
+                       />
+                       <input 
+                         type="number"
+                         placeholder="Amount"
+                         value={incomeForm.amount || ''}
+                         onChange={(e) => setIncomeForm({...incomeForm, amount: Number(e.target.value)})}
+                         className="flex-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-green-500/20 text-sm dark:text-white"
+                       />
+                       <button type="submit" disabled={isSaving} className="bg-green-600 text-white px-4 rounded-xl hover:bg-green-700 transition-all">
+                         <Plus size={18} />
+                       </button>
+                    </form>
+
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      {incomes.map(inc => (
+                        <div key={inc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg rounded-2xl group transition-all">
+                          <div>
+                            <p className="text-xs font-black text-gray-400 dark:text-dark-muted">{inc.date}</p>
+                            <p className="text-sm font-bold dark:text-white">Daily Payment Received</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="font-black text-green-600">+ ৳{inc.amount}</span>
+                            <button onClick={() => deleteDoc(doc(db, 'cng_income', inc.id))} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expense Section */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between px-2">
+                    <h3 className="font-black text-lg dark:text-white flex items-center gap-2">
+                       <TrendingUp className="text-red-500" size={20} /> {t.cngExpense}
+                    </h3>
+                  </div>
+
+                   <div className="bg-white dark:bg-dark-surface p-6 rounded-3xl border border-gray-50 dark:border-dark-border">
+                    <form onSubmit={handleAddExpense} className="grid grid-cols-2 gap-3 mb-5">
+                       <input 
+                         type="date"
+                         value={expenseForm.date}
+                         onChange={(e) => setExpenseForm({...expenseForm, date: e.target.value})}
+                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-sm dark:text-white"
+                       />
+                       <select 
+                         value={expenseForm.type}
+                         onChange={(e) => setExpenseForm({...expenseForm, type: e.target.value as any})}
+                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-sm dark:text-white"
+                       >
+                         <option value="Gas">Gas</option>
+                         <option value="Repair">Repair</option>
+                         <option value="Tire">Tire</option>
+                         <option value="Battery">Battery</option>
+                         <option value="Engine">Engine</option>
+                         <option value="Other">Other</option>
+                       </select>
+                       <input 
+                         type="number"
+                         placeholder="Amount"
+                         value={expenseForm.amount || ''}
+                         onChange={(e) => setExpenseForm({...expenseForm, amount: Number(e.target.value)})}
+                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-sm dark:text-white"
+                       />
+                       <button type="submit" disabled={isSaving} className="col-span-1 bg-red-600 text-white py-2.5 rounded-xl hover:bg-red-700 transition-all font-bold flex items-center justify-center gap-2 text-sm">
+                         <Plus size={16} /> {t.save}
+                       </button>
+                    </form>
+
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                       {expenses.map(exp => (
+                        <div key={exp.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg rounded-2xl group transition-all">
+                          <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 bg-white dark:bg-dark-surface rounded-xl flex items-center justify-center text-gray-400">
+                                <Fuel size={20} />
+                             </div>
+                             <div>
+                              <p className="text-xs font-black text-gray-400 dark:text-dark-muted">{exp.date}</p>
+                              <p className="text-sm font-bold dark:text-white">{exp.type}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="font-black text-red-500">- ৳{exp.amount}</span>
+                            <button onClick={() => deleteDoc(doc(db, 'cng_expenses', exp.id))} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="h-full flex items-center justify-center text-center p-20">
+              <div className="max-w-xs space-y-4">
+                 <div className="w-24 h-24 bg-gray-100 dark:bg-dark-surface rounded-[40px] flex items-center justify-center mx-auto">
+                    <Smartphone className="text-gray-300 dark:text-dark-muted" size={48} />
+                 </div>
+                 <h3 className="text-xl font-black dark:text-white">{t.selectVehicle}</h3>
+              </div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Add CNG Modal */}
+      {isAdding && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+           <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-dark-surface w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden border border-gray-100 dark:border-dark-border"
+          >
+             <div className="p-6 border-b border-gray-50 dark:border-dark-border flex items-center justify-between">
+              <h3 className="text-xl font-black dark:text-white">{t.addCNG}</h3>
+              <button onClick={() => setIsAdding(false)} className="text-gray-300 hover:text-gray-500 transition-colors p-1">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+               <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.cngNumber}</label>
+                  <input 
+                    required
+                    type="text"
+                    placeholder="SYL-XXX"
+                    value={form.cngNumber}
+                    onChange={(e) => setForm({...form, cngNumber: e.target.value})}
+                    className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-3 px-5 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                  />
+               </div>
+
+               <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{lang === 'bn' ? 'ড্রাইভার নির্বাচন করুন' : 'Select Driver'}</label>
+                  <select 
+                    required
+                    value={form.driverId}
+                    onChange={(e) => setForm({...form, driverId: e.target.value})}
+                    className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-3 px-5 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                  >
+                     <option value="">Choose Driver</option>
+                     {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.dailyPayment}</label>
+                    <input 
+                      required
+                      type="number"
+                      value={form.dailyPayment || ''}
+                      onChange={(e) => setForm({...form, dailyPayment: Number(e.target.value)})}
+                      className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-3 px-5 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.dueAmount}</label>
+                    <input 
+                      type="number"
+                      value={form.dueAmount || ''}
+                      onChange={(e) => setForm({...form, dueAmount: Number(e.target.value)})}
+                      className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-3 px-5 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    />
+                  </div>
+               </div>
+
+               <div className="flex gap-4 pt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsAdding(false)}
+                  className="flex-1 py-3.5 bg-gray-50 dark:bg-dark-bg text-gray-500 dark:text-dark-muted font-bold rounded-xl hover:bg-gray-100 transition-all text-sm"
+                >
+                  {t.close}
+                </button>
+                <button 
+                  disabled={isSaving}
+                  type="submit" 
+                  className="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 text-sm"
+                >
+                  {isSaving ? t.loading : <><Save size={18} /> {t.save}</>}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+         </div>
+      )}
+    </div>
+  );
+}
