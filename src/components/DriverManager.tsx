@@ -15,7 +15,8 @@ import {
   CreditCard,
   User,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { Driver } from '../types';
 import { translations, Language } from '../locales';

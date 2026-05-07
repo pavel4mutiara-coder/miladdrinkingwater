@@ -193,29 +193,29 @@ export default function DealerManager({ lang }: { lang: Language }) {
               {/* Dealer Profile Card */}
               <div className="bg-white dark:bg-dark-surface p-6 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <button 
                       onClick={() => setSelectedDealer(null)}
-                      className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-full"
+                      className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-xl"
                     >
                       <ChevronRight className="rotate-180" size={20} />
                     </button>
                     <div>
-                      <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white mb-1">{selectedDealer.name}</h1>
-                      <div className="flex flex-wrap gap-3 text-xs lg:text-sm">
-                        <span className="flex items-center gap-1.5 text-gray-500 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg px-3 py-1 lg:py-1.5 rounded-full">
-                          <MapPin size={14} className="text-cyan-600 dark:text-cyan-400" />
+                      <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-ink dark:text-white mb-1 truncate max-w-[200px] sm:max-w-none">{selectedDealer.name}</h1>
+                      <div className="flex flex-wrap gap-2 sm:gap-3 text-[10px] sm:text-xs lg:text-sm">
+                        <span className="flex items-center gap-1 sm:gap-1.5 text-gray-500 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg px-2 sm:px-3 py-1 lg:py-1.5 rounded-full truncate max-w-[150px] sm:max-w-none">
+                          <MapPin size={10} className="sm:w-[14px] sm:h-[14px] text-cyan-600 dark:text-cyan-400" />
                           {selectedDealer.address}
                         </span>
-                        <span className="flex items-center gap-1.5 text-gray-500 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg px-3 py-1 lg:py-1.5 rounded-full">
-                          <Phone size={14} className="text-cyan-600 dark:text-cyan-400" />
+                        <span className="flex items-center gap-1 sm:gap-1.5 text-gray-500 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg px-2 sm:px-3 py-1 lg:py-1.5 rounded-full">
+                          <Phone size={10} className="sm:w-[14px] sm:h-[14px] text-cyan-600 dark:text-cyan-400" />
                           {selectedDealer.phone}
                         </span>
                         <button 
                           onClick={() => handleStartEdit(selectedDealer)}
-                          className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 lg:py-1.5 rounded-full hover:bg-blue-100 transition-colors font-medium"
+                          className="flex items-center gap-1 sm:gap-1.5 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 sm:px-3 py-1 lg:py-1.5 rounded-full hover:bg-blue-100 transition-colors font-medium"
                         >
-                          <Pencil size={12} />
+                          <Pencil size={10} className="sm:w-3 sm:h-3" />
                           {lang === 'bn' ? 'পরিবর্তন' : 'Edit'}
                         </button>
                       </div>

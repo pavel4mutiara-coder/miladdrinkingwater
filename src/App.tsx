@@ -23,7 +23,8 @@ import {
   ChevronRight,
   Languages,
   Moon,
-  Sun
+  Sun,
+  Smartphone
 } from 'lucide-react';
 import { Vehicle, Maintenance, VehicleIncome, Dealer, WaterSale, CompanyExpense } from './types';
 import { translations, Language } from './locales';
@@ -283,32 +284,38 @@ export default function App() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-white dark:bg-dark-surface px-6 py-4 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
+        <header className="lg:hidden bg-white dark:bg-dark-surface px-4 py-3 border-b border-gray-100 dark:border-dark-border flex items-center justify-between sticky top-0 z-50">
            <div className="flex items-center gap-2">
-            <div className="bg-blue-600 rounded-lg p-1.5">
+            <div className="bg-blue-600 rounded-lg p-1.5 shadow-lg shadow-blue-500/20">
               <Droplets className="text-white w-5 h-5" />
             </div>
-            <span className="font-black text-lg dark:text-white">MILAD</span>
+            <span className="font-black text-lg dark:text-white tracking-tight">MILAD</span>
           </div>
-          <div className="flex items-center gap-4">
-            <button onClick={toggleDarkMode} className="text-gray-400 dark:text-dark-muted">
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button onClick={handleLogout} className="text-red-500">
-              <LogOut size={20} />
+          <div className="flex items-center gap-3">
+             <div className="flex items-center bg-gray-50 dark:bg-dark-bg rounded-full px-2 py-1">
+                <button onClick={toggleLang} className="px-2 py-1 text-[10px] font-bold text-gray-500 dark:text-dark-muted">
+                   {lang.toUpperCase()}
+                </button>
+                <div className="w-px h-3 bg-gray-200 dark:bg-dark-border mx-1" />
+                <button onClick={toggleDarkMode} className="p-1 px-2 text-gray-500 dark:text-dark-muted">
+                   {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
+                </button>
+             </div>
+            <button onClick={handleLogout} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-xl">
+              <LogOut size={18} />
             </button>
           </div>
         </header>
 
         {/* Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-10 pb-24 lg:pb-10 bg-bg-warm dark:bg-dark-bg transition-colors duration-300">
+        <div className="flex-1 overflow-y-auto p-4 lg:p-10 pb-28 lg:pb-10 bg-bg-warm dark:bg-dark-bg transition-colors duration-300">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.15 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
               className="h-full"
             >
               {activeTab === 'dashboard' && <Dashboard lang={lang} />}
@@ -323,11 +330,15 @@ export default function App() {
         </div>
 
         {/* Mobile Nav */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border-t border-gray-100 dark:border-dark-border px-6 py-3 flex justify-between z-40">
-           <MobileNavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={22} />} />
-           <MobileNavItem active={activeTab === 'dealers'} onClick={() => setActiveTab('dealers')} icon={<Droplets size={22} />} />
-           <MobileNavItem active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Truck size={22} />} />
-           <MobileNavItem active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} icon={<DollarSign size={22} />} />
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 px-4 pb-6 z-40">
+           <div className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border p-2 rounded-[32px] shadow-2xl flex justify-between items-center overflow-x-auto custom-scrollbar no-scrollbar scroll-smooth">
+              <MobileNavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={20} />} label={t.dashboard} />
+              <MobileNavItem active={activeTab === 'dealers'} onClick={() => setActiveTab('dealers')} icon={<Droplets size={20} />} label={t.dealers} />
+              <MobileNavItem active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Truck size={20} />} label={t.vehicles} />
+              <MobileNavItem active={activeTab === 'cng'} onClick={() => setActiveTab('cng')} icon={<Smartphone size={20} />} label={t.cng} />
+              <MobileNavItem active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} icon={<DollarSign size={20} />} label={t.expenses} />
+              <MobileNavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<BarChart3 size={20} />} label={t.reports} />
+           </div>
         </nav>
       </main>
     </div>
@@ -351,17 +362,18 @@ function NavItem({ active, onClick, icon, label }: { active: boolean, onClick: (
   );
 }
 
-function MobileNavItem({ active, onClick, icon }: { active: boolean, onClick: () => void, icon: React.ReactNode }) {
+function MobileNavItem({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
   return (
     <button 
       onClick={onClick}
-      className={`p-3 rounded-2xl transition-all ${
+      className={`flex flex-col items-center gap-1 p-2 min-w-[64px] rounded-2xl transition-all ${
         active 
-          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-sm' 
+          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
           : 'text-gray-400 dark:text-dark-muted'
       }`}
     >
       {icon}
+      <span className="text-[8px] font-black uppercase tracking-tighter">{label}</span>
     </button>
   );
 }

@@ -15,7 +15,8 @@ import {
   Fuel,
   Settings as SettingsIcon,
   User as UserIcon,
-  Smartphone
+  Smartphone,
+  ChevronRight
 } from 'lucide-react';
 import { CNG, CNGIncome, CNGExpense, Driver } from '../types';
 import { translations, Language } from '../locales';
@@ -139,7 +140,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-full min-h-[600px]">
       {/* Sidebar List */}
-      <div className="w-full lg:w-80 flex flex-col gap-6">
+      <div className={`w-full lg:w-80 flex flex-col gap-6 ${selectedCng ? 'hidden lg:flex' : 'flex'}`}>
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-black dark:text-white uppercase tracking-tight">{t.cng}</h2>
           <button onClick={() => setIsAdding(true)} className="p-2 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
@@ -175,7 +176,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
       </div>
 
       {/* Details Area */}
-      <div className="flex-1">
+      <div className={`flex-1 ${!selectedCng ? 'hidden lg:flex' : 'flex flex-col'}`}>
         <AnimatePresence mode="wait">
           {selectedCng ? (
             <motion.div
@@ -185,28 +186,34 @@ export default function CNGManager({ lang }: CNGManagerProps) {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <div className="bg-white dark:bg-dark-surface p-8 rounded-[40px] border border-gray-50 dark:border-dark-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-6 text-ink dark:text-white">
-                  <div className="w-16 h-16 bg-blue-600 rounded-[22px] flex items-center justify-center shadow-lg shadow-blue-600/20">
-                    <TrendingUp className="text-white" size={32} />
+              <div className="bg-white dark:bg-dark-surface p-5 sm:p-8 rounded-3xl sm:rounded-[40px] border border-gray-50 dark:border-dark-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-4 sm:gap-6 text-ink dark:text-white">
+                  <button 
+                    onClick={() => setSelectedCng(null)}
+                    className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-xl"
+                  >
+                    <ChevronRight className="rotate-180" size={20} />
+                  </button>
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 rounded-xl sm:rounded-[22px] flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0">
+                    <TrendingUp className="text-white w-6 h-6 sm:w-8 sm:h-8" />
                   </div>
-                  <div>
-                    <h1 className="text-3xl font-black">{selectedCng.cngNumber}</h1>
-                     <div className="flex items-center gap-2 text-gray-400 dark:text-dark-muted text-sm font-bold">
-                        <UserIcon size={14} /> {drivers.find(d => d.id === selectedCng.driverId)?.name}
+                  <div className="min-w-0">
+                    <h1 className="text-xl sm:text-3xl font-black truncate">{selectedCng.cngNumber}</h1>
+                     <div className="flex items-center gap-2 text-gray-400 dark:text-dark-muted text-[10px] sm:text-sm font-bold truncate">
+                        <UserIcon size={12} className="sm:w-[14px] sm:h-[14px]" /> {drivers.find(d => d.id === selectedCng.driverId)?.name}
                      </div>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t.dailyPayment}</p>
-                    <p className="text-2xl font-black text-ink dark:text-white">৳{selectedCng.dailyPayment.toLocaleString()}</p>
+                <div className="flex gap-4 border-t sm:border-t-0 border-gray-50 pt-4 sm:pt-0">
+                  <div className="flex-1 sm:text-right">
+                    <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] sm:tracking-[0.2em]">{t.dailyPayment}</p>
+                    <p className="text-lg sm:text-2xl font-black text-ink dark:text-white font-mono">৳{selectedCng.dailyPayment.toLocaleString()}</p>
                   </div>
-                  <div className="w-px h-10 bg-gray-100 dark:bg-dark-border mx-2 self-center" />
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em]">{t.dueAmount}</p>
-                    <p className="text-2xl font-black text-red-500">৳{selectedCng.dueAmount.toLocaleString()}</p>
+                  <div className="w-px h-8 sm:h-10 bg-gray-100 dark:bg-dark-border mx-1 sm:mx-2 self-center" />
+                  <div className="flex-1 text-right">
+                    <p className="text-[9px] sm:text-[10px] font-black text-red-400 uppercase tracking-[0.15em] sm:tracking-[0.2em]">{t.dueAmount}</p>
+                    <p className="text-lg sm:text-2xl font-black text-red-500 font-mono">৳{selectedCng.dueAmount.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -219,37 +226,37 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                        <DollarSign className="text-green-500" size={20} /> {t.cngIncome}
                     </h3>
                   </div>
-                  <div className="bg-white dark:bg-dark-surface p-6 rounded-3xl border border-gray-50 dark:border-dark-border">
-                    <form onSubmit={handleAddIncome} className="flex gap-3 mb-5">
+                  <div className="bg-white dark:bg-dark-surface p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-50 dark:border-dark-border">
+                    <form onSubmit={handleAddIncome} className="flex gap-2 sm:gap-3 mb-5">
                        <input 
                          type="date"
                          value={incomeForm.date}
                          onChange={(e) => setIncomeForm({...incomeForm, date: e.target.value})}
-                         className="flex-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-green-500/20 text-sm dark:text-white"
+                         className="flex-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2 px-3 sm:py-2.5 sm:px-4 outline-none focus:ring-2 focus:ring-green-500/20 text-xs sm:text-sm dark:text-white"
                        />
                        <input 
                          type="number"
                          placeholder="Amount"
                          value={incomeForm.amount || ''}
                          onChange={(e) => setIncomeForm({...incomeForm, amount: Number(e.target.value)})}
-                         className="flex-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-green-500/20 text-sm dark:text-white"
+                         className="flex-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2 px-3 sm:py-2.5 sm:px-4 outline-none focus:ring-2 focus:ring-green-500/20 text-xs sm:text-sm dark:text-white"
                        />
-                       <button type="submit" disabled={isSaving} className="bg-green-600 text-white px-4 rounded-xl hover:bg-green-700 transition-all">
+                       <button type="submit" disabled={isSaving} className="bg-green-600 text-white px-3 sm:px-4 rounded-xl hover:bg-green-700 transition-all shrink-0">
                          <Plus size={18} />
                        </button>
                     </form>
 
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
                       {incomes.map(inc => (
-                        <div key={inc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg rounded-2xl group transition-all">
+                        <div key={inc.id} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl sm:rounded-2xl group transition-all">
                           <div>
-                            <p className="text-xs font-black text-gray-400 dark:text-dark-muted">{inc.date}</p>
-                            <p className="text-sm font-bold dark:text-white">Daily Payment Received</p>
+                            <p className="text-[10px] font-black text-gray-400 dark:text-dark-muted">{inc.date}</p>
+                            <p className="text-xs sm:text-sm font-bold dark:text-white shrink-0 truncate max-w-[120px] sm:max-w-none">Daily Payment Received</p>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-black text-green-600">+ ৳{inc.amount}</span>
-                            <button onClick={() => deleteDoc(doc(db, 'cng_income', inc.id))} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all">
-                              <Trash2 size={16} />
+                          <div className="flex items-center gap-2 sm:gap-4">
+                            <span className="font-black text-green-600 text-xs sm:text-base">+ ৳{inc.amount}</span>
+                            <button onClick={() => deleteDoc(doc(db, 'cng_income', inc.id))} className="opacity-0 lg:group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all">
+                              <Trash2 size={14} className="sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         </div>
@@ -266,18 +273,18 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                     </h3>
                   </div>
 
-                   <div className="bg-white dark:bg-dark-surface p-6 rounded-3xl border border-gray-50 dark:border-dark-border">
-                    <form onSubmit={handleAddExpense} className="grid grid-cols-2 gap-3 mb-5">
+                  <div className="bg-white dark:bg-dark-surface p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-50 dark:border-dark-border">
+                    <form onSubmit={handleAddExpense} className="grid grid-cols-2 gap-2 sm:gap-3 mb-5">
                        <input 
                          type="date"
                          value={expenseForm.date}
                          onChange={(e) => setExpenseForm({...expenseForm, date: e.target.value})}
-                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-sm dark:text-white"
+                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2 px-3 sm:py-2.5 sm:px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-xs sm:text-sm dark:text-white"
                        />
                        <select 
                          value={expenseForm.type}
                          onChange={(e) => setExpenseForm({...expenseForm, type: e.target.value as any})}
-                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-sm dark:text-white"
+                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2 px-3 sm:py-2.5 sm:px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-xs sm:text-sm dark:text-white"
                        >
                          <option value="Gas">Gas</option>
                          <option value="Repair">Repair</option>
@@ -291,29 +298,29 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                          placeholder="Amount"
                          value={expenseForm.amount || ''}
                          onChange={(e) => setExpenseForm({...expenseForm, amount: Number(e.target.value)})}
-                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-sm dark:text-white"
+                         className="col-span-1 bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2 px-3 sm:py-2.5 sm:px-4 outline-none focus:ring-2 focus:ring-red-500/20 text-xs sm:text-sm dark:text-white"
                        />
-                       <button type="submit" disabled={isSaving} className="col-span-1 bg-red-600 text-white py-2.5 rounded-xl hover:bg-red-700 transition-all font-bold flex items-center justify-center gap-2 text-sm">
-                         <Plus size={16} /> {t.save}
+                       <button type="submit" disabled={isSaving} className="col-span-1 bg-red-600 text-white py-2 px-3 sm:py-2.5 rounded-xl hover:bg-red-700 transition-all font-bold flex items-center justify-center gap-1 sm:gap-2 text-[10px] sm:text-sm">
+                         <Plus size={14} className="sm:w-4 sm:h-4" /> {t.save}
                        </button>
                     </form>
 
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
                        {expenses.map(exp => (
-                        <div key={exp.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg rounded-2xl group transition-all">
-                          <div className="flex items-center gap-3">
-                             <div className="w-10 h-10 bg-white dark:bg-dark-surface rounded-xl flex items-center justify-center text-gray-400">
-                                <Fuel size={20} />
+                        <div key={exp.id} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl sm:rounded-2xl group transition-all">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white dark:bg-dark-surface rounded-lg sm:rounded-xl flex items-center justify-center text-gray-400 shrink-0">
+                                <Fuel size={16} className="sm:w-5 sm:h-5" />
                              </div>
-                             <div>
-                              <p className="text-xs font-black text-gray-400 dark:text-dark-muted">{exp.date}</p>
-                              <p className="text-sm font-bold dark:text-white">{exp.type}</p>
+                             <div className="truncate">
+                              <p className="text-[10px] font-black text-gray-400 dark:text-dark-muted">{exp.date}</p>
+                              <p className="text-xs sm:text-sm font-bold dark:text-white truncate">{exp.type}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-black text-red-500">- ৳{exp.amount}</span>
-                            <button onClick={() => deleteDoc(doc(db, 'cng_expenses', exp.id))} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all">
-                              <Trash2 size={16} />
+                          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                            <span className="font-black text-red-500 text-xs sm:text-base">- ৳{exp.amount}</span>
+                            <button onClick={() => deleteDoc(doc(db, 'cng_expenses', exp.id))} className="opacity-0 lg:group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all">
+                              <Trash2 size={14} className="sm:w-4 sm:h-4" />
                             </button>
                           </div>
                         </div>

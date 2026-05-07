@@ -62,24 +62,24 @@ export default function ReportsManager({ lang }: { lang: Language }) {
 
   return (
     <div className="space-y-8 pb-10 print:p-0">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 print:hidden">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 print:hidden">
         <div>
-          <h1 className="text-3xl font-black text-ink dark:text-white mb-2">{t.reports}</h1>
-          <p className="text-gray-500 dark:text-dark-muted font-medium">{t.allStats}</p>
+          <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white mb-2">{t.reports}</h1>
+          <p className="text-gray-500 dark:text-dark-muted font-medium text-sm lg:text-base">{t.allStats}</p>
         </div>
-        <div className="flex gap-3">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="month" 
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="pl-12 pr-4 py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold dark:text-white"
+              className="w-full sm:w-auto pl-12 pr-4 py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold dark:text-white text-sm"
             />
           </div>
           <button 
             onClick={handlePrint}
-            className="flex items-center gap-2 px-6 py-3 bg-ink dark:bg-blue-600 text-white rounded-2xl font-bold hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-ink dark:bg-blue-600 text-white rounded-2xl font-bold hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 text-sm"
           >
             <Printer size={18} />
             {t.printReport}
@@ -88,52 +88,52 @@ export default function ReportsManager({ lang }: { lang: Language }) {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-emerald-50 dark:bg-emerald-900/20 p-8 rounded-[40px] border border-emerald-100 dark:border-emerald-900/30"
+          className="bg-emerald-50 dark:bg-emerald-900/20 p-6 lg:p-8 rounded-3xl lg:rounded-[40px] border border-emerald-100 dark:border-emerald-900/30"
         >
-          <div className="w-12 h-12 bg-white dark:bg-emerald-800 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm mb-6">
-            <TrendingUp size={24} />
+          <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-emerald-800 rounded-xl lg:rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm mb-4 lg:mb-6">
+            <TrendingUp size={20} className="lg:w-6 lg:h-6" />
           </div>
-          <p className="text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{t.totalIncome}</p>
-          <h2 className="text-3xl lg:text-4xl font-black text-emerald-700 dark:text-emerald-300">৳{totalIncome.toLocaleString()}</h2>
+          <p className="text-emerald-600 dark:text-emerald-400 text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-1 lg:mb-2">{t.totalIncome}</p>
+          <h2 className="text-2xl lg:text-4xl font-black text-emerald-700 dark:text-emerald-300">৳{totalIncome.toLocaleString()}</h2>
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-rose-50 dark:bg-rose-900/20 p-8 rounded-[40px] border border-rose-100 dark:border-rose-900/30"
+          className="bg-rose-50 dark:bg-rose-900/20 p-6 lg:p-8 rounded-3xl lg:rounded-[40px] border border-rose-100 dark:border-rose-900/30"
         >
-          <div className="w-12 h-12 bg-white dark:bg-rose-800 rounded-2xl flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-sm mb-6">
-            <TrendingDown size={24} />
+          <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-rose-800 rounded-xl lg:rounded-2xl flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-sm mb-4 lg:mb-6">
+            <TrendingDown size={20} className="lg:w-6 lg:h-6" />
           </div>
-          <p className="text-rose-600 dark:text-rose-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{t.totalExpense}</p>
-          <h2 className="text-3xl lg:text-4xl font-black text-rose-700 dark:text-rose-300">৳{totalExpense.toLocaleString()}</h2>
+          <p className="text-rose-600 dark:text-rose-400 text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-1 lg:mb-2">{t.totalExpense}</p>
+          <h2 className="text-2xl lg:text-4xl font-black text-rose-700 dark:text-rose-300">৳{totalExpense.toLocaleString()}</h2>
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-blue-50 dark:bg-blue-900/20 p-8 rounded-[40px] border border-blue-100 dark:border-blue-900/30"
+          className="bg-blue-50 dark:bg-blue-900/20 p-6 lg:p-8 rounded-3xl lg:rounded-[40px] border border-blue-100 dark:border-blue-900/30"
         >
-          <div className="w-12 h-12 bg-white dark:bg-blue-800 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm mb-6">
-            <DollarSign size={24} />
+          <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-blue-800 rounded-xl lg:rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm mb-4 lg:mb-6">
+            <DollarSign size={20} className="lg:w-6 lg:h-6" />
           </div>
-          <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-[0.2em] mb-2">{t.netProfit}</p>
-          <h2 className="text-3xl lg:text-4xl font-black text-blue-700 dark:text-blue-300">৳{netProfit.toLocaleString()}</h2>
+          <p className="text-blue-600 dark:text-blue-400 text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-1 lg:mb-2">{t.netProfit}</p>
+          <h2 className="text-2xl lg:text-4xl font-black text-blue-700 dark:text-blue-300">৳{netProfit.toLocaleString()}</h2>
         </motion.div>
       </div>
 
       {/* Detailed Table for Printing */}
-      <div className="bg-white dark:bg-dark-surface p-8 lg:p-12 rounded-[40px] border border-gray-100 dark:border-dark-border shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between mb-10">
-          <h3 className="text-xl font-bold flex items-center gap-3 dark:text-white">
+      <div className="bg-white dark:bg-dark-surface p-5 lg:p-12 rounded-3xl lg:rounded-[40px] border border-gray-100 dark:border-dark-border shadow-sm overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 sm:mb-10 gap-4">
+          <h3 className="text-lg lg:text-xl font-bold flex items-center gap-3 dark:text-white">
             <BarChart2 className="text-blue-500" />
-            {lang === 'bn' ? 'বিস্তারিত পরিসংখ্যান' : 'Detailed Breakdown'} ({selectedMonth})
+            {lang === 'bn' ? 'বিস্তারিত পরিসংখ্যান' : 'Detailed Breakdown'} <span className="text-xs sm:text-base opacity-50">({selectedMonth})</span>
           </h3>
           <div className="hidden print:block text-right">
              <h2 className="text-xl font-bold">Anika Transport & Milad Drinking Water</h2>
@@ -141,18 +141,18 @@ export default function ReportsManager({ lang }: { lang: Language }) {
           </div>
         </div>
 
-        <div className="space-y-6">
-          <ReportRow label={t.totalVehicleIncome} amount={stats.vehicleIncome} type="income" />
-          <ReportRow label={t.totalWaterSales} amount={stats.waterSales} type="income" />
-          <ReportRow label={t.cngIncome} amount={stats.cngIncome} type="income" />
-          <div className="border-t border-gray-100 dark:border-dark-border my-4"></div>
-          <ReportRow label={t.totalMaintenanceCost} amount={stats.maintenanceCost} type="expense" />
-          <ReportRow label={t.cngExpense} amount={stats.cngExpense} type="expense" />
-          <ReportRow label={t.otherExpenses} amount={stats.otherExpense} type="expense" />
+        <div className="space-y-4 lg:space-y-6">
+          <ReportRow label={t.totalVehicleIncome} amount={stats.vehicleIncome} type="income" lang={lang} />
+          <ReportRow label={t.totalWaterSales} amount={stats.waterSales} type="income" lang={lang} />
+          <ReportRow label={t.cngIncome} amount={stats.cngIncome} type="income" lang={lang} />
+          <div className="border-t border-gray-100 dark:border-dark-border my-2 lg:my-4"></div>
+          <ReportRow label={t.totalMaintenanceCost} amount={stats.maintenanceCost} type="expense" lang={lang} />
+          <ReportRow label={t.cngExpense} amount={stats.cngExpense} type="expense" lang={lang} />
+          <ReportRow label={t.otherExpenses} amount={stats.otherExpense} type="expense" lang={lang} />
           
-          <div className="mt-10 p-6 bg-gray-50 dark:bg-dark-bg rounded-3xl flex justify-between items-center">
-            <span className="text-lg font-black dark:text-white">{t.netProfit}</span>
-            <span className={`text-2xl font-black ${netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+          <div className="mt-6 lg:mt-10 p-5 lg:p-6 bg-gray-50 dark:bg-dark-bg rounded-2xl lg:rounded-3xl flex justify-between items-center">
+            <span className="text-base lg:text-lg font-black dark:text-white">{t.netProfit}</span>
+            <span className={`text-xl lg:text-2xl font-black ${netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
               ৳{netProfit.toLocaleString()}
             </span>
           </div>
@@ -174,12 +174,12 @@ export default function ReportsManager({ lang }: { lang: Language }) {
   );
 }
 
-function ReportRow({ label, amount, type }: { label: string, amount: number, type: 'income' | 'expense' }) {
+function ReportRow({ label, amount, type, lang }: { label: string, amount: number, type: 'income' | 'expense', lang: Language }) {
   return (
     <div className="flex justify-between items-center py-2">
-      <span className="text-gray-600 dark:text-dark-muted font-medium">{label}</span>
-      <span className={`font-black ${type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
-        {type === 'income' ? '+' : '-'} ৳{amount.toLocaleString()}
+      <span className="text-gray-600 dark:text-dark-muted font-medium text-xs lg:text-base">{label}</span>
+      <span className={`font-black text-sm lg:text-base ${type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+        {type === 'income' ? '+' : '-'} ৳{(amount || 0).toLocaleString()}
       </span>
     </div>
   );

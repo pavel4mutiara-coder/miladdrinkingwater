@@ -286,27 +286,27 @@ export default function VehicleManager({ lang }: { lang: Language }) {
       {/* Add Vehicle Modal */}
       <AnimatePresence>
         {isAddingVehicle && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-dark-surface rounded-[40px] p-8 lg:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border"
+              className="bg-white dark:bg-dark-surface rounded-3xl sm:rounded-[40px] p-5 sm:p-8 lg:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border"
             >
               <button 
                 onClick={() => {
                   setIsAddingVehicle(false);
                   setEditingVehicleId(null);
-                  setNewVehicle({ vehicleNumber: '', name: '', type: '' });
+                  setNewVehicle({ vehicleNumber: '', name: '', type: '', imageURL: '', registrationNumber: '', fitnessDate: '', insuranceDate: '', taxTokenDate: '' });
                 }}
-                className="absolute top-8 right-8 text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full"
+                className="absolute top-4 right-4 sm:top-8 sm:right-8 text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
-              <h2 className="text-2xl lg:text-3xl font-black mb-8 dark:text-white">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black mb-4 sm:mb-8 dark:text-white">
                 {editingVehicleId ? t.editVehicle : t.addVehicle}
               </h2>
-              <form onSubmit={handleAddVehicle} className="space-y-4 max-h-[85vh] overflow-y-auto px-1 custom-scrollbar">
+              <form onSubmit={handleAddVehicle} className="space-y-3 sm:space-y-4 max-h-[75vh] sm:max-h-[85vh] overflow-y-auto px-1 custom-scrollbar">
                   <ImageUpload 
                     label="Vehicle Photo"
                     currentImageUrl={newVehicle.imageURL}
@@ -639,22 +639,22 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             onSubmit={handleSubmit}
-            className="p-4 lg:p-6 bg-blue-50/30 dark:bg-blue-900/10 border-b border-gray-50 dark:border-dark-border grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="p-4 lg:p-6 bg-blue-50/30 dark:bg-blue-900/10 border-b border-gray-50 dark:border-dark-border grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4"
           >
             {fields.map(f => (
-              <div key={f.name} className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{f.label}</label>
+              <div key={f.name} className={`space-y-1 ${f.name === 'description' || f.name === 'routeDetails' ? 'col-span-2 lg:col-span-1' : 'col-span-1'}`}>
+                <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block truncate">{f.label}</label>
                 <input 
-                  required
-                  type={f.type} 
-                  value={newData[f.name] || ''} 
-                  onChange={e => setNewData({...newData, [f.name]: e.target.value})} 
-                  className="w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                   required
+                   type={f.type} 
+                   value={newData[f.name] || ''} 
+                   onChange={e => setNewData({...newData, [f.name]: e.target.value})} 
+                   className="w-full px-3 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-xs sm:text-sm dark:text-white"
                 />
               </div>
             ))}
-            <div className="flex items-end lg:col-span-1">
-               <button className="w-full bg-ink dark:bg-blue-600 text-white py-2 rounded-xl font-bold text-sm">{t.save}</button>
+            <div className="flex items-end col-span-2 lg:col-span-1">
+               <button className="w-full bg-ink dark:bg-blue-600 text-white py-2 lg:py-3 rounded-xl font-bold text-xs lg:text-sm shadow-lg shadow-blue-500/20">{t.save}</button>
             </div>
           </motion.form>
         )}
