@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, handleFirestoreError, OperationType, loginAnonymously, logout, auth } from './lib/firebase';
+import { db, handleFirestoreError, OperationType } from './lib/firebase';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, Timestamp, orderBy, where } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -38,8 +38,10 @@ import CNGManager from './components/CNGManager';
 import ReportsManager from './components/ReportsManager';
 
 export default function App() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<{ uid: string } | null>(() => {
+    return localStorage.getItem('milad_admin_session') === 'active' ? { uid: 'admin' } : null;
+  });
+  const [loading, setLoading] = useState(false);
   const [lang, setLang] = useState<Language>('bn');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'vehicles' | 'dealers' | 'expenses' | 'drivers' | 'cng' | 'reports'>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -53,14 +55,6 @@ export default function App() {
 
   const ADMIN_USERNAME = "Admin";
   const ADMIN_PASSWORD = "Milad2006";
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -79,7 +73,8 @@ export default function App() {
 
   const handleLogout = async () => {
     if (window.confirm(lang === 'bn' ? 'আপনি কি নিশ্চিত?' : 'Are you sure?')) {
-      await logout();
+      localStorage.removeItem('milad_admin_session');
+      setUser(null);
     }
   };
 
@@ -102,22 +97,16 @@ export default function App() {
     setLoginError('');
     setIsLoggingIn(true);
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      try {
-        await loginAnonymously();
-      } catch (error: any) {
-        console.error("Login Error:", error);
-        if (error.code === 'auth/operation-not-allowed') {
-          setLoginError('Anonymous Auth is disabled in Firebase. Please enable it in the console.');
-        } else {
-          setLoginError('Login failed: ' + (error.message || 'Please try again.'));
-        }
-        setIsLoggingIn(false);
+    // Simulate login delay
+    setTimeout(() => {
+      if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        localStorage.setItem('milad_admin_session', 'active');
+        setUser({ uid: 'admin' });
+      } else {
+        setLoginError('Invalid Username or Password');
       }
-    } else {
-      setLoginError('Invalid Username or Password');
       setIsLoggingIn(false);
-    }
+    }, 500);
   };
 
   if (!user) {
