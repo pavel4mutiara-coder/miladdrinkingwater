@@ -105,8 +105,13 @@ export default function App() {
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       try {
         await loginAnonymously();
-      } catch (error) {
-        setLoginError('Login failed. Please try again.');
+      } catch (error: any) {
+        console.error("Login Error:", error);
+        if (error.code === 'auth/operation-not-allowed') {
+          setLoginError('Anonymous Auth is disabled in Firebase. Please enable it in the console.');
+        } else {
+          setLoginError('Login failed: ' + (error.message || 'Please try again.'));
+        }
         setIsLoggingIn(false);
       }
     } else {
