@@ -18,10 +18,27 @@ const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfig.f
 
 // Defensive check: Ensure at least the API Key and Project ID are present
 let initializationError: Error | null = null;
+let app: any = null;
+let db: any = null;
+let auth: any = null;
+let storage: any = null;
+
 if (!config.apiKey || !config.projectId) {
-  initializationError = new Error('Firebase credentials are missing. Please check your environment variables or firebase-applet-config.json.');
+  initializationError = new Error('Firebase credentials are missing. Please ensure VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID are set in your environment variables.');
   console.error('CRITICAL:', initializationError.message);
+} else {
+  try {
+    app = initializeApp(config);
+    db = getFirestore(app, databaseId);
+    auth = getAuth(app);
+    storage = getStorage(app);
+  } catch (error: any) {
+    initializationError = error;
+    console.error('Firebase Initialization Failed:', error);
+  }
 }
+
+export { db, auth, storage };
 
 // Special function to check for initialization errors inside components
 export function checkFirebaseInitialized() {
@@ -30,15 +47,13 @@ export function checkFirebaseInitialized() {
   }
 }
 
-const app = initializeApp(config);
-export const db = getFirestore(app, databaseId);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
 export const loginAnonymously = () => { /* Not used with local auth */ };
 export const logout = () => { /* Not used with local auth */ };
 
 // Test connection and database configuration
 async function verifyFirebaseSetup() {
+  if (initializationError || !db) return;
+
   const currentConfig = {
     projectId: config.projectId,
     databaseId: databaseId,
