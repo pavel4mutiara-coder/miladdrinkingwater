@@ -15,7 +15,13 @@ if (!rootElement) {
   try {
     createRoot(rootElement).render(
       <StrictMode>
-        <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
+        <ErrorBoundary 
+          FallbackComponent={ErrorFallback} 
+          onReset={() => window.location.reload()}
+          onError={(error, info) => {
+            console.error('ErrorBoundary caught an error:', error, info);
+          }}
+        >
           <App />
         </ErrorBoundary>
       </StrictMode>,

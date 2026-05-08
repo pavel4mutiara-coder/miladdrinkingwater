@@ -1,59 +1,164 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --color-bg-warm: #f5f5f4;
-  --color-ink: #1a1a1a;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-dark-bg: #0f172a;
-  --color-dark-surface: #1e293b;
-  --color-dark-border: #334155;
-  --color-dark-text: #f8fafc;
+  --color-ink: #0f172a;
+  --color-dark-bg: #020617;
+  --color-dark-surface: #0f172a;
+  --color-dark-border: #1e293b;
   --color-dark-muted: #94a3b8;
+  --color-dark-text: #f8fafc;
 }
 
-@utility no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
+@layer base {
+  body {
+    @apply font-sans bg-[#f8fafc] text-ink selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden transition-colors duration-300;
   }
 }
 
-body {
-  @apply font-sans bg-bg-warm text-ink transition-colors duration-300 overflow-x-hidden;
-}
+@layer components {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700;
+  }
 
-/* Touch Targets & Mobile Fixes */
-input, select, textarea, button {
-  @apply min-h-[44px];
-}
+  /* Professional Document Styles */
+  .document-shadow {
+    box-shadow: 0 0 50px -12px rgb(0 0 0 / 0.15);
+  }
 
-@media (max-width: 640px) {
-  .modal-container {
-    @apply p-4 max-h-[90vh] overflow-y-auto;
+  .printable-document {
+    @apply bg-white dark:bg-dark-surface text-ink dark:text-white rounded-[32px] sm:rounded-[40px] shadow-2xl p-6 sm:p-12 lg:p-16 border border-gray-100 dark:border-dark-border;
+    width: 100%;
+    max-width: 800px; /* Centered preview on desktop */
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Specific styles for the printed page */
+  @media print {
+    .printable-document {
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background-color: white !important;
+      color: black !important;
+    }
+    
+    .printable-document * {
+      color: black !important;
+      background-color: transparent !important;
+      border-color: #e2e8f0 !important;
+    }
   }
 }
 
 .dark body {
-  @apply bg-slate-950 text-slate-50;
+  @apply bg-[#020617] text-slate-50;
 }
 
-/* Custom Scrollbar for Dark Mode */
-.dark ::-webkit-scrollbar {
-  width: 8px;
+/* Touch Targets */
+button, select, input {
+  @apply min-h-[44px];
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: #0f172a;
-}
+/* Print Overrides */
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 10px;
-}
+  html, body {
+    background-color: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100%;
+    height: 100%;
+  }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+
+  .print\:m-0 {
+    margin: 0 !important;
+  }
+
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  .print\:border-none {
+    border: none !important;
+  }
+
+  .printable-document {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: white !important;
+    color: black !important;
+  }
+
+  .dark .printable-document {
+    background-color: white !important;
+    color: black !important;
+    border: none !important;
+  }
+
+  .dark .printable-document * {
+    color: black !important;
+    background-color: transparent !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Specific elements to preserve colors if needed */
+  .print-force-color {
+     -webkit-print-color-adjust: exact !important;
+     print-color-adjust: exact !important;
+  }
+
+  /* Force table borders in print */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #e2e8f0 !important;
+    padding: 8px !important;
+  }
+
+  .no-print-bg {
+    background-image: none !important;
+  }
+
+  /* Page break handling */
+  .break-inside-avoid {
+    page-break-inside: avoid !important;
+  }
 }

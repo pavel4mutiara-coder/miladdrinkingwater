@@ -16,6 +16,8 @@ import {
   Calendar,
   Layers,
   Pencil,
+  Printer,
+  FileText,
   Check
 } from 'lucide-react';
 import { Dealer, WaterSale } from '../types';
@@ -259,7 +261,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
               {/* Water Sales Section */}
               <div className="grid grid-cols-1 gap-8">
                 <div className="bg-white dark:bg-dark-surface p-4 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm">
-                  <SalesRecorder dealerId={selectedDealer.id} lang={lang} />
+                  <SalesRecorder dealer={selectedDealer} lang={lang} />
                 </div>
               </div>
             </motion.div>
@@ -400,7 +402,8 @@ export default function DealerManager({ lang }: { lang: Language }) {
   );
 }
 
-function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language }) {
+function SalesRecorder({ dealer, lang }: { dealer: Dealer, lang: Language }) {
+  const dealerId = dealer.id;
   const t = translations[lang];
   const [sales, setSales] = useState<WaterSale[]>([]);
   const [dealerExpenses, setDealerExpenses] = useState<any[]>([]);
@@ -535,8 +538,96 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
   const totalAmount = sales.reduce((sum, s) => sum + s.totalAmount, 0);
   const totalDealerExpense = dealerExpenses.reduce((sum, exp) => sum + exp.amount, 0);
 
+  const handlePrintStatement = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6">
+      {/* Printable Statement (Hidden in UI, Visible in Print) */}
+      <div className="hidden print:block fixed inset-0 z-[9999] bg-white w-full h-full p-0 m-0">
+        <div className="printable-document px-12 py-16">
+          <div className="flex justify-between items-start border-b-2 border-gray-100 pb-8 mb-10">
+            <div>
+              <h2 className="text-2xl font-black uppercase text-blue-600">{t.miladWater}</h2>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.anikaTransport}</p>
+              <p className="text-xs mt-2 text-gray-500">{t.address}</p>
+            </div>
+            <div className="text-right">
+              <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">{lang === 'bn' ? 'ডিলার স্টেটমেন্ট' : 'Dealer Statement'}</h1>
+              <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 inline-block">
+                <p className="text-xs font-black text-gray-500 uppercase tracking-widest">
+                  {lang === 'bn' ? 'তারিখ' : 'Date'}: {new Date().toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-10 bg-gray-50 p-6 rounded-3xl border border-gray-100 flex justify-between items-center">
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t.dealerName}</p>
+              <h3 className="text-xl font-black text-ink">{dealer.name}</h3>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{lang === 'bn' ? 'মোট লেনদেন' : 'Total Transactions'}</p>
+              <p className="text-xl font-black text-emerald-600">৳{totalAmount.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <table className="w-full text-left border-collapse border border-gray-100 rounded-2xl overflow-hidden">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-100">
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.date}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.product}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{t.quantity}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t.unitPrice}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t.total}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {sales.map(s => (
+                <tr key={s.id} className="text-xs font-bold">
+                  <td className="px-6 py-4 text-gray-500">{s.date}</td>
+                  <td className="px-6 py-4">{s.productType}</td>
+                  <td className="px-6 py-4 text-center">{s.quantity}</td>
+                  <td className="px-6 py-4 text-right">৳{s.unitPrice.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right text-emerald-600 font-black">৳{s.totalAmount.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+               <tr className="bg-gray-50/50">
+                  <td colSpan={2} className="px-6 py-6 text-sm font-black uppercase tracking-tight">{lang === 'bn' ? 'সর্বমোট' : 'Grand Total'}</td>
+                  <td className="px-6 py-6 text-center font-black text-sm">{totalQuantity.toLocaleString()}</td>
+                  <td className="px-6 py-6"></td>
+                  <td className="px-6 py-6 text-right font-black text-base text-emerald-700 font-mono">৳{totalAmount.toLocaleString()}</td>
+               </tr>
+            </tfoot>
+          </table>
+
+          <div className="mt-20 pt-10 border-t border-gray-100 grid grid-cols-2 gap-12">
+            <div className="text-center">
+              <div className="mb-4 h-12 flex items-center justify-center">
+                <div className="w-full max-w-[150px] border-b-2 border-dashed border-gray-200"></div>
+              </div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer Signature</p>
+            </div>
+            <div className="text-center">
+              <div className="mb-4 h-12 flex items-center justify-center">
+                <div className="w-full max-w-[150px] border-b-2 border-dashed border-gray-200"></div>
+              </div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Authority Signature</p>
+            </div>
+          </div>
+          
+          <div className="mt-12 text-center">
+            <p className="text-[8px] font-bold text-gray-300 uppercase tracking-[0.3em]">
+              OFFICIAL BUSINESS STATEMENT • {t.miladWater}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Overview Cards for Dealer */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6 border-b border-gray-50 dark:border-dark-border">
           <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100/50 dark:border-blue-900/30">
@@ -555,22 +646,31 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
           </div>
       </div>
 
-      <div className="flex items-center justify-between border-b border-gray-50 dark:border-dark-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-50 dark:border-dark-border pb-4 gap-4">
         <h3 className="text-lg lg:text-xl font-bold flex items-center gap-2 dark:text-white">
           <Droplets className="text-blue-500 dark:text-blue-400" />
           {t.waterSalesRecord}
         </h3>
-        <button 
-          onClick={() => setShowAdd(!showAdd)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-            showAdd 
-              ? 'bg-ink dark:bg-blue-600 text-white' 
-              : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50'
-          }`}
-        >
-          {showAdd ? <X size={16} /> : <Plus size={16} />}
-          {showAdd ? t.close : t.addSale}
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={handlePrintStatement}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-dark-bg text-gray-600 dark:text-dark-muted rounded-xl text-sm font-bold hover:bg-gray-100 transition-all border border-gray-100 dark:border-dark-border"
+          >
+            <Printer size={16} />
+            {t.printReport}
+          </button>
+          <button 
+            onClick={() => setShowAdd(!showAdd)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              showAdd 
+                ? 'bg-ink dark:bg-blue-600 text-white' 
+                : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+            }`}
+          >
+            {showAdd ? <X size={16} /> : <Plus size={16} />}
+            {showAdd ? t.close : t.addSale}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>

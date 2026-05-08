@@ -136,59 +136,153 @@ export default function ReportsManager({ lang }: { lang: Language }) {
         </motion.div>
       </div>
 
-      {/* Detailed Table for Printing */}
-      <div className="bg-white dark:bg-dark-surface p-5 lg:p-12 rounded-3xl lg:rounded-[40px] border border-gray-100 dark:border-dark-border shadow-sm overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 sm:mb-10 gap-4">
-          <h3 className="text-lg lg:text-xl font-bold flex items-center gap-3 dark:text-white">
-            <BarChart2 className="text-blue-500" />
-            {lang === 'bn' ? 'বিস্তারিত পরিসংখ্যান' : 'Detailed Breakdown'} <span className="text-xs sm:text-base opacity-50">({selectedMonth})</span>
-          </h3>
-          <div className="hidden print:block text-right">
-             <h2 className="text-xl font-bold">Anika Transport & Milad Drinking Water</h2>
-             <p className="text-xs text-gray-500">{t.address}</p>
-          </div>
-        </div>
+      {/* Detailed Document for Printing */}
+      <div className="flex justify-center">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="printable-document rounded-[32px] sm:rounded-[40px] shadow-2xl p-6 sm:p-12 lg:p-16 border border-gray-100 dark:border-dark-border"
+        >
+          {/* Document Header */}
+          <div className="flex flex-col md:flex-row justify-between gap-8 mb-12 border-b border-gray-100 dark:border-dark-border pb-10">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                  <BarChart2 size={24} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black tracking-tight dark:text-white uppercase">
+                    {t.miladWater}
+                  </h2>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-[0.2em]">
+                    {t.anikaTransport}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-gray-500 dark:text-dark-muted flex items-center gap-2">
+                  <Calendar size={14} className="text-blue-500" />
+                  {t.address}
+                </p>
+              </div>
+            </div>
 
-        <div className="space-y-4 lg:space-y-6">
-          <ReportRow label={t.totalVehicleIncome} amount={stats.vehicleIncome} type="income" lang={lang} />
-          <ReportRow label={t.totalWaterSales} amount={stats.waterSales} type="income" lang={lang} />
-          <ReportRow label={t.cngIncome} amount={stats.cngIncome} type="income" lang={lang} />
-          <div className="border-t border-gray-100 dark:border-dark-border my-2 lg:my-4"></div>
-          <ReportRow label={t.totalMaintenanceCost} amount={stats.maintenanceCost} type="expense" lang={lang} />
-          <ReportRow label={t.cngExpense} amount={stats.cngExpense} type="expense" lang={lang} />
-          <ReportRow label={t.otherExpenses} amount={stats.otherExpense} type="expense" lang={lang} />
-          
-          <div className="mt-6 lg:mt-10 p-5 lg:p-6 bg-gray-50 dark:bg-dark-bg rounded-2xl lg:rounded-3xl flex justify-between items-center">
-            <span className="text-base lg:text-lg font-black dark:text-white">{t.netProfit}</span>
-            <span className={`text-xl lg:text-2xl font-black ${netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              ৳{netProfit.toLocaleString()}
-            </span>
+            <div className="text-left md:text-right space-y-2">
+              <h1 className="text-3xl font-black text-ink dark:text-white uppercase tracking-tighter">
+                {lang === 'bn' ? 'ব্যবসায়িক রিপোর্ট' : 'Business Report'}
+              </h1>
+              <div className="inline-block px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                <p className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                  {lang === 'bn' ? 'সময়কাল' : 'Period'}: {selectedMonth}
+                </p>
+              </div>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">
+                ID: RPT-{selectedMonth.replace('-', '')}-{Math.floor(Math.random() * 9000 + 1000)}
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Print Footer */}
-      <div className="hidden print:flex justify-between mt-20 pt-10 border-t border-gray-200">
-         <div className="text-center">
-            <div className="w-32 border-t border-black mb-2"></div>
-            <p className="text-xs font-bold">Manager Signature</p>
-         </div>
-         <div className="text-center">
-            <div className="w-32 border-t border-black mb-2"></div>
-            <p className="text-xs font-bold">Proprietor Signature</p>
-         </div>
+          {/* Report Content Table */}
+          <div className="space-y-8">
+            <div className="overflow-hidden border border-gray-100 dark:border-dark-border rounded-3xl">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-dark-bg/50 border-b border-gray-100 dark:border-dark-border">
+                    <th className="px-8 py-5 text-xs font-black text-gray-500 dark:text-dark-muted uppercase tracking-widest">
+                      {lang === 'bn' ? 'বিবরণ' : 'Description'}
+                    </th>
+                    <th className="px-8 py-5 text-xs font-black text-gray-500 dark:text-dark-muted uppercase tracking-widest text-right">
+                      {lang === 'bn' ? 'ধরণ' : 'Type'}
+                    </th>
+                    <th className="px-8 py-5 text-xs font-black text-gray-500 dark:text-dark-muted uppercase tracking-widest text-right">
+                      {lang === 'bn' ? 'পরিমাণ' : 'Amount'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
+                  <ReportTableRow label={t.totalVehicleIncome} amount={stats.vehicleIncome} type="income" lang={lang} />
+                  <ReportTableRow label={t.totalWaterSales} amount={stats.waterSales} type="income" lang={lang} />
+                  <ReportTableRow label={t.cngIncome} amount={stats.cngIncome} type="income" lang={lang} />
+                  <ReportTableRow label={t.totalMaintenanceCost} amount={stats.maintenanceCost} type="expense" lang={lang} />
+                  <ReportTableRow label={t.cngExpense} amount={stats.cngExpense} type="expense" lang={lang} />
+                  <ReportTableRow label={t.otherExpenses} amount={stats.otherExpense} type="expense" lang={lang} />
+                </tbody>
+              </table>
+            </div>
+
+            {/* Financial Summary */}
+            <div className="flex justify-end pt-6">
+              <div className="w-full sm:w-80 space-y-4">
+                <div className="flex justify-between items-center px-4">
+                   <span className="text-sm font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.totalIncome}</span>
+                   <span className="text-lg font-black text-emerald-600">৳{totalIncome.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center px-4">
+                   <span className="text-sm font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest">{t.totalExpense}</span>
+                   <span className="text-lg font-black text-rose-600">৳{totalExpense.toLocaleString()}</span>
+                </div>
+                <div className="h-px bg-gray-100 dark:bg-dark-border mx-2"></div>
+                <div className="flex justify-between items-center p-6 bg-gray-50 dark:bg-dark-bg rounded-3xl border border-gray-100 dark:border-dark-border">
+                   <span className="text-base font-black dark:text-white uppercase tracking-tight">{t.netProfit}</span>
+                   <span className={`text-2xl font-black ${netProfit >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600'}`}>
+                      ৳{netProfit.toLocaleString()}
+                   </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Signature Footer */}
+          <div className="mt-24 pt-12 border-t border-gray-100 dark:border-dark-border grid grid-cols-2 gap-12">
+            <div className="text-center group">
+              <div className="mb-4 h-12 flex items-center justify-center">
+                <div className="w-full max-w-[200px] border-b-2 border-dashed border-gray-200 dark:border-dark-border group-hover:border-blue-400 transition-colors"></div>
+              </div>
+              <p className="text-xs font-black text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em]">
+                {lang === 'bn' ? 'ম্যানেজারের স্বাক্ষর' : 'Manager Signature'}
+              </p>
+            </div>
+            <div className="text-center group">
+              <div className="mb-4 h-12 flex items-center justify-center">
+                <div className="w-full max-w-[200px] border-b-2 border-dashed border-gray-200 dark:border-dark-border group-hover:border-blue-400 transition-colors"></div>
+              </div>
+              <p className="text-xs font-black text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em]">
+                {lang === 'bn' ? 'মালিকের স্বাক্ষর' : 'Proprietor Signature'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <p className="text-[9px] font-bold text-gray-300 dark:text-dark-muted uppercase tracking-[0.3em]">
+              Generated by Milad Drinking Water Management System
+            </p>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
 }
 
-function ReportRow({ label, amount, type, lang }: { label: string, amount: number, type: 'income' | 'expense', lang: Language }) {
+function ReportTableRow({ label, amount, type, lang }: { label: string, amount: number, type: 'income' | 'expense', lang: Language }) {
   return (
-    <div className="flex justify-between items-center py-2">
-      <span className="text-gray-600 dark:text-dark-muted font-medium text-xs lg:text-base">{label}</span>
-      <span className={`font-black text-sm lg:text-base ${type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+    <tr className="group hover:bg-gray-50/50 dark:hover:bg-dark-bg/50 transition-colors">
+      <td className="px-8 py-5 text-sm font-bold text-ink dark:text-white capitalize">
+        {label}
+      </td>
+      <td className="px-8 py-5 text-right">
+        <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+          type === 'income' 
+            ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' 
+            : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+        }`}>
+          {type === 'income' ? (lang === 'bn' ? 'আয়' : 'Income') : (lang === 'bn' ? 'ব্যয়' : 'Expense')}
+        </span>
+      </td>
+      <td className={`px-8 py-5 text-right font-mono font-black text-sm ${
+        type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+      }`}>
         {type === 'income' ? '+' : '-'} ৳{(amount || 0).toLocaleString()}
-      </span>
-    </div>
+      </td>
+    </tr>
   );
 }

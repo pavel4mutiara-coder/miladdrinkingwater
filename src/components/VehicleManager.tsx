@@ -16,7 +16,9 @@ import {
   X,
   AlertCircle,
   Calendar,
-  BarChart2
+  BarChart2,
+  Printer,
+  FileText
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -239,6 +241,76 @@ export default function VehicleManager({ lang }: { lang: Language }) {
         ) : (
           <div className="space-y-6 lg:space-y-8 pb-10">
             <div className="bg-white dark:bg-dark-surface p-6 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
+               {/* Printable Vehicle Report (Hidden in UI, Visible in Print) */}
+               <div className="hidden print:block fixed inset-0 z-[9999] bg-white w-full h-full p-0 m-0">
+                  <div className="printable-document px-12 py-16">
+                    <div className="flex justify-between items-start border-b-2 border-gray-100 pb-8 mb-10">
+                      <div>
+                        <h2 className="text-2xl font-black uppercase text-blue-600">{t.miladWater}</h2>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.anikaTransport}</p>
+                        <p className="text-xs mt-2 text-gray-500">{t.address}</p>
+                      </div>
+                      <div className="text-right">
+                        <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">{lang === 'bn' ? 'যানবাহন রিপোর্ট' : 'Vehicle Report'}</h1>
+                        <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 inline-block">
+                          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">
+                            {lang === 'bn' ? 'তারিখ' : 'Date'}: {new Date().toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mb-10 flex gap-10 items-center bg-gray-50 p-8 rounded-[40px] border border-gray-100">
+                      <div className="w-32 h-32 rounded-3xl border-4 border-white shadow-xl overflow-hidden bg-white flex items-center justify-center">
+                        {selectedVehicle.imageURL ? (
+                          <img src={selectedVehicle.imageURL} className="w-full h-full object-cover" />
+                        ) : (
+                          <Truck className="text-gray-200 w-16 h-16" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t.vehicleNumber}</p>
+                        <h3 className="text-4xl font-black text-ink mb-2">{selectedVehicle.vehicleNumber}</h3>
+                        <p className="text-sm font-bold text-gray-500">{selectedVehicle.name} • {selectedVehicle.type}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-4 mb-12">
+                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">{t.regNumber}</p>
+                          <p className="text-xs font-black">{selectedVehicle.registrationNumber || 'N/A'}</p>
+                       </div>
+                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                          <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1">{t.fitnessDate}</p>
+                          <p className="text-xs font-black">{selectedVehicle.fitnessDate || 'N/A'}</p>
+                       </div>
+                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                          <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">{t.insuranceDate}</p>
+                          <p className="text-xs font-black">{selectedVehicle.insuranceDate || 'N/A'}</p>
+                       </div>
+                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                          <p className="text-[8px] font-black text-orange-500 uppercase tracking-widest mb-1">{t.taxToken}</p>
+                          <p className="text-xs font-black">{selectedVehicle.taxTokenDate || 'N/A'}</p>
+                       </div>
+                    </div>
+
+                    <div className="mt-20 pt-10 border-t border-gray-100 grid grid-cols-2 gap-12">
+                      <div className="text-center">
+                        <div className="mb-4 h-12 flex items-center justify-center">
+                          <div className="w-full max-w-[150px] border-b-2 border-dashed border-gray-200"></div>
+                        </div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Driver/Staff Signature</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="mb-4 h-12 flex items-center justify-center">
+                          <div className="w-full max-w-[150px] border-b-2 border-dashed border-gray-200"></div>
+                        </div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Manager Signature</p>
+                      </div>
+                    </div>
+                  </div>
+               </div>
+
                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 dark:bg-blue-900/10 rounded-bl-full -mr-10 -mt-10 opacity-50" />
                
                <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-3xl bg-gray-50 dark:bg-dark-bg border-2 border-gray-100 dark:border-dark-border overflow-hidden flex items-center justify-center shrink-0">
@@ -250,14 +322,22 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                </div>
 
                <div className="flex-1 w-full">
-                  <div className="flex items-center gap-4 mb-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => setSelectedVehicle(null)}
+                        className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-full"
+                      >
+                        <ChevronRight className="rotate-180" size={20} />
+                      </button>
+                      <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white">{selectedVehicle.vehicleNumber}</h1>
+                    </div>
                     <button 
-                      onClick={() => setSelectedVehicle(null)}
-                      className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-full"
+                      onClick={() => window.print()}
+                      className="p-3 bg-gray-50 dark:bg-dark-bg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-2xl border border-gray-100 dark:border-dark-border transition-all active:scale-95"
                     >
-                      <ChevronRight className="rotate-180" size={20} />
+                      <Printer size={20} />
                     </button>
-                    <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white">{selectedVehicle.vehicleNumber}</h1>
                   </div>
                   <p className="text-gray-500 dark:text-dark-muted text-sm lg:text-base font-bold mb-4">{selectedVehicle.name} • {selectedVehicle.type}</p>
                   

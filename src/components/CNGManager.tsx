@@ -16,7 +16,9 @@ import {
   Settings as SettingsIcon,
   User as UserIcon,
   Smartphone,
-  ChevronRight
+  ChevronRight,
+  Printer,
+  Calendar
 } from 'lucide-react';
 import { CNG, CNGIncome, CNGExpense, Driver } from '../types';
 import { translations, Language } from '../locales';
@@ -260,8 +262,116 @@ export default function CNGManager({ lang }: CNGManagerProps) {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
-              <div className="bg-white dark:bg-dark-surface p-5 sm:p-8 rounded-3xl sm:rounded-[40px] border border-gray-50 dark:border-dark-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-4 sm:gap-6 text-ink dark:text-white">
+              {/* Printable CNG Report (Hidden in UI, Visible in Print) */}
+              <div className="hidden print:block fixed inset-0 z-[9999] bg-white w-full h-full p-0 m-0">
+                <div className="printable-document px-12 py-16">
+                  <div className="flex justify-between items-start border-b-2 border-gray-100 pb-8 mb-10">
+                    <div>
+                      <h2 className="text-2xl font-black uppercase text-blue-600">{t.miladWater}</h2>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.anikaTransport}</p>
+                      <p className="text-xs mt-2 text-gray-500">{t.address}</p>
+                    </div>
+                    <div className="text-right">
+                      <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">{lang === 'bn' ? 'সিএনজি রিপোর্ট' : 'CNG Rickshaw Report'}</h1>
+                      <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 inline-block">
+                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">
+                          {lang === 'bn' ? 'তারিখ' : 'Date'}: {new Date().toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-10 grid grid-cols-2 gap-8">
+                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t.cngNumber}</p>
+                      <h3 className="text-2xl font-black text-ink">{selectedCng.cngNumber}</h3>
+                      <p className="text-xs font-bold text-gray-500 mt-2">{lang === 'bn' ? 'ড্রাইভার' : 'Driver'}: {drivers.find(d => d.id === selectedCng.driverId)?.name}</p>
+                    </div>
+                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 grid grid-cols-2 gap-4">
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t.dailyPayment}</p>
+                        <p className="text-xl font-black text-ink">৳{selectedCng.dailyPayment.toLocaleString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1">{t.dueAmount}</p>
+                        <p className="text-xl font-black text-red-600">৳{selectedCng.dueAmount.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-12">
+                    {/* Income Table */}
+                    <div>
+                      <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <DollarSign size={16} className="text-emerald-500" />
+                        {t.cngIncome}
+                      </h3>
+                      <table className="w-full text-left border-collapse border border-gray-100 rounded-2xl overflow-hidden">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-100">
+                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.date}</th>
+                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.description}</th>
+                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t.amount}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {incomes.map(inc => (
+                            <tr key={inc.id} className="text-xs font-bold">
+                              <td className="px-6 py-3 text-gray-500">{inc.date}</td>
+                              <td className="px-6 py-3">Daily Rent Received</td>
+                              <td className="px-6 py-3 text-right text-emerald-600 font-black">৳{inc.amount.toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Expense Table */}
+                    <div>
+                      <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <TrendingUp size={16} className="text-rose-500" />
+                        {t.cngExpense}
+                      </h3>
+                      <table className="w-full text-left border-collapse border border-gray-100 rounded-2xl overflow-hidden">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-100">
+                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.date}</th>
+                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.category}</th>
+                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t.amount}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {expenses.map(exp => (
+                            <tr key={exp.id} className="text-xs font-bold">
+                              <td className="px-6 py-3 text-gray-500">{exp.date}</td>
+                              <td className="px-6 py-3">{exp.type}</td>
+                              <td className="px-6 py-3 text-right text-rose-600 font-black">৳{exp.amount.toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="mt-20 pt-10 border-t border-gray-100 grid grid-cols-2 gap-12">
+                    <div className="text-center">
+                      <div className="mb-4 h-12 flex items-center justify-center">
+                        <div className="w-full max-w-[150px] border-b-2 border-dashed border-gray-200"></div>
+                      </div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Driver Signature</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="mb-4 h-12 flex items-center justify-center">
+                        <div className="w-full max-w-[150px] border-b-2 border-dashed border-gray-200"></div>
+                      </div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Authorized Signature</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-dark-surface p-5 sm:p-8 rounded-3xl sm:rounded-[40px] border border-gray-50 dark:border-dark-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative">
+                 <div className="flex items-center gap-4 sm:gap-6 text-ink dark:text-white">
                   <button 
                     onClick={() => setSelectedCng(null)}
                     className="lg:hidden p-2 text-gray-400 dark:text-dark-muted bg-gray-50 dark:bg-dark-bg rounded-xl"
@@ -279,16 +389,24 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                   </div>
                 </div>
 
-                <div className="flex gap-4 border-t sm:border-t-0 border-gray-50 pt-4 sm:pt-0">
-                  <div className="flex-1 sm:text-right">
-                    <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] sm:tracking-[0.2em]">{t.dailyPayment}</p>
-                    <p className="text-lg sm:text-2xl font-black text-ink dark:text-white font-mono">৳{selectedCng.dailyPayment.toLocaleString()}</p>
+                <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
+                  <div className="flex gap-4">
+                    <div className="flex-1 sm:text-right">
+                      <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] sm:tracking-[0.2em]">{t.dailyPayment}</p>
+                      <p className="text-lg sm:text-2xl font-black text-ink dark:text-white font-mono">৳{selectedCng.dailyPayment.toLocaleString()}</p>
+                    </div>
+                    <div className="w-px h-8 sm:h-10 bg-gray-100 dark:bg-dark-border mx-1 sm:mx-2 self-center" />
+                    <div className="flex-1 text-right">
+                      <p className="text-[9px] sm:text-[10px] font-black text-red-400 uppercase tracking-[0.15em] sm:tracking-[0.2em]">{t.dueAmount}</p>
+                      <p className="text-lg sm:text-2xl font-black text-red-500 font-mono">৳{selectedCng.dueAmount.toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div className="w-px h-8 sm:h-10 bg-gray-100 dark:bg-dark-border mx-1 sm:mx-2 self-center" />
-                  <div className="flex-1 text-right">
-                    <p className="text-[9px] sm:text-[10px] font-black text-red-400 uppercase tracking-[0.15em] sm:tracking-[0.2em]">{t.dueAmount}</p>
-                    <p className="text-lg sm:text-2xl font-black text-red-500 font-mono">৳{selectedCng.dueAmount.toLocaleString()}</p>
-                  </div>
+                  <button 
+                    onClick={() => window.print()}
+                    className="p-3 bg-gray-50 dark:bg-dark-bg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-2xl border border-gray-100 dark:border-dark-border transition-all transition-colors active:scale-95"
+                  >
+                    <Printer size={20} />
+                  </button>
                 </div>
               </div>
 
