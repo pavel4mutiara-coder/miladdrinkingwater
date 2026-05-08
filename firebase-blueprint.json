@@ -94,6 +94,32 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "createdAt"]
+    },
+    "Driver": {
+      "title": "Driver",
+      "description": "Information about a vehicle driver",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "nid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone", "nid", "createdAt"]
+    },
+    "CNGRickshaw": {
+      "title": "CNG Rickshaw",
+      "description": "Information about a CNG rickshaw",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "cngNumber": { "type": "string" },
+        "driverId": { "type": "string" },
+        "dailyPayment": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["cngNumber", "driverId", "dailyPayment", "createdAt"]
     }
   },
   "firestore": {
@@ -124,6 +150,22 @@
     "expense_categories": {
       "schema": "ExpenseCategory",
       "description": "Custom categories for business expenses"
+    },
+    "drivers": {
+      "schema": "Driver",
+      "description": "Collection of vehicle drivers"
+    },
+    "cng_rickshaws": {
+      "schema": "CNGRickshaw",
+      "description": "Collection of CNG rickshaws"
+    },
+    "cng_income": {
+      "schema": "object",
+      "description": "Daily income logs for CNG rickshaws"
+    },
+    "cng_expenses": {
+      "schema": "object",
+      "description": "Expense logs for CNG rickshaws"
     }
   }
 }

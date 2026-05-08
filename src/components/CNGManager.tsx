@@ -69,15 +69,22 @@ export default function CNGManager({ lang }: CNGManagerProps) {
   useEffect(() => {
     if (!selectedCng) return;
 
-    const qInc = query(collection(db, 'cng_income'), where('cngId', '==', selectedCng.id), orderBy('date', 'desc'));
-    const qExp = query(collection(db, 'cng_expenses'), where('cngId', '==', selectedCng.id), orderBy('date', 'desc'));
+    const qInc = query(collection(db, 'cng_income'), where('cngId', '==', selectedCng.id));
+    const qExp = query(collection(db, 'cng_expenses'), where('cngId', '==', selectedCng.id));
 
     const unsubInc = onSnapshot(qInc, (snapshot) => {
-      setIncomes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as CNGIncome)));
-    });
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as CNGIncome));
+      // Sort in-memory to avoid index requirement
+      data.sort((a, b) => b.date.localeCompare(a.date));
+      setIncomes(data);
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'cng_income'));
+
     const unsubExp = onSnapshot(qExp, (snapshot) => {
-      setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as CNGExpense)));
-    });
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as CNGExpense));
+      // Sort in-memory to avoid index requirement
+      data.sort((a, b) => b.date.localeCompare(a.date));
+      setExpenses(data);
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'cng_expenses'));
 
     return () => {
       unsubInc();
