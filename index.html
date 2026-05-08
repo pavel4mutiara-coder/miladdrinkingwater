@@ -12,9 +12,27 @@
     <title>Milad Drinking Water Management</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="initial-loading" style="height: 100vh; display: flex; align-items: center; justify-content: center; background: #0f172a; color: #3b82f6; font-family: sans-serif;">
+        <div style="text-align: center;">
+          <h2 style="margin-bottom: 10px;">Milad Water Management</h2>
+          <p style="color: #94a3b8; font-size: 14px;">Initializing application...</p>
+        </div>
+      </div>
+    </div>
+    <script>
+      window.onerror = function(msg, url, lineNo, columnNo, error) {
+        console.error('Fatal Early Error:', msg, error);
+        const root = document.getElementById('root');
+        if (root && root.innerHTML === '') {
+          root.innerHTML = '<div style="padding: 20px; color: red; font-family: sans-serif;"><h1>App Initialization Failed</h1><p>' + msg + '</p><p>Check console for details.</p></div>';
+        }
+        return false;
+      };
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      /* 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then(reg => {
@@ -24,6 +42,7 @@
           });
         });
       }
+      */
     </script>
   </body>
 </html>
