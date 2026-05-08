@@ -17,11 +17,17 @@ const config = {
 const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfig.firestoreDatabaseId;
 
 // Defensive check: Ensure at least the API Key and Project ID are present
+let initializationError: Error | null = null;
 if (!config.apiKey || !config.projectId) {
-  const errorMsg = 'Firebase credentials are missing. Please check your environment variables or firebase-applet-config.json.';
-  console.error('CRITICAL:', errorMsg);
-  // We throw an error that will be caught by the ErrorBoundary set up in main.tsx
-  throw new Error(errorMsg);
+  initializationError = new Error('Firebase credentials are missing. Please check your environment variables or firebase-applet-config.json.');
+  console.error('CRITICAL:', initializationError.message);
+}
+
+// Special function to check for initialization errors inside components
+export function checkFirebaseInitialized() {
+  if (initializationError) {
+    throw initializationError;
+  }
 }
 
 const app = initializeApp(config);

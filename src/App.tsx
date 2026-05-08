@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, handleFirestoreError, OperationType } from './lib/firebase';
+import { db, handleFirestoreError, OperationType, checkFirebaseInitialized } from './lib/firebase';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, Timestamp, orderBy, where } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -41,6 +41,9 @@ import ReportsManager from './components/ReportsManager';
 import ConfirmModal from './components/ui/ConfirmModal';
 
 export default function App() {
+  // Ensure Firebase is initialized correctly before rendering
+  checkFirebaseInitialized();
+
   const [user, setUser] = useState<{ uid: string } | null>(() => {
     try {
       return localStorage.getItem('milad_admin_session') === 'active' ? { uid: 'admin' } : null;
