@@ -69,7 +69,7 @@ export default function ReportsManager({ lang }: { lang: Language }) {
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative flex-1 sm:flex-initial">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted" size={18} />
             <input 
               type="month" 
               value={selectedMonth}
@@ -79,7 +79,7 @@ export default function ReportsManager({ lang }: { lang: Language }) {
           </div>
           <button 
             onClick={handlePrint}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-ink dark:bg-blue-600 text-white rounded-2xl font-bold hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 text-sm"
+            className="flex items-center justify-center gap-2 px-6 py-4 sm:py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 text-sm active:scale-95"
           >
             <Printer size={18} />
             {t.printReport}
@@ -88,43 +88,46 @@ export default function ReportsManager({ lang }: { lang: Language }) {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-emerald-50 dark:bg-emerald-900/20 p-6 lg:p-8 rounded-3xl lg:rounded-[40px] border border-emerald-100 dark:border-emerald-900/30"
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-emerald-50 dark:bg-emerald-900/20 p-6 lg:p-8 rounded-[32px] lg:rounded-[40px] border border-emerald-100 dark:border-emerald-900/30"
         >
           <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-emerald-800 rounded-xl lg:rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm mb-4 lg:mb-6">
             <TrendingUp size={20} className="lg:w-6 lg:h-6" />
           </div>
           <p className="text-emerald-600 dark:text-emerald-400 text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-1 lg:mb-2">{t.totalIncome}</p>
-          <h2 className="text-2xl lg:text-4xl font-black text-emerald-700 dark:text-emerald-300">৳{totalIncome.toLocaleString()}</h2>
+          <h2 className="text-2xl lg:text-4xl font-black text-emerald-700 dark:text-emerald-300 tracking-tight">৳{totalIncome.toLocaleString()}</h2>
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="bg-rose-50 dark:bg-rose-900/20 p-6 lg:p-8 rounded-3xl lg:rounded-[40px] border border-rose-100 dark:border-rose-900/30"
+          className="bg-rose-50 dark:bg-rose-900/20 p-6 lg:p-8 rounded-[32px] lg:rounded-[40px] border border-rose-100 dark:border-rose-900/30"
         >
           <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-rose-800 rounded-xl lg:rounded-2xl flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-sm mb-4 lg:mb-6">
             <TrendingDown size={20} className="lg:w-6 lg:h-6" />
           </div>
           <p className="text-rose-600 dark:text-rose-400 text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-1 lg:mb-2">{t.totalExpense}</p>
-          <h2 className="text-2xl lg:text-4xl font-black text-rose-700 dark:text-rose-300">৳{totalExpense.toLocaleString()}</h2>
+          <h2 className="text-2xl lg:text-4xl font-black text-rose-700 dark:text-rose-300 tracking-tight">৳{totalExpense.toLocaleString()}</h2>
         </motion.div>
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="bg-blue-50 dark:bg-blue-900/20 p-6 lg:p-8 rounded-3xl lg:rounded-[40px] border border-blue-100 dark:border-blue-900/30"
+          className="bg-blue-50 dark:bg-blue-900/20 p-6 lg:p-8 rounded-[32px] lg:rounded-[40px] border border-blue-100 dark:border-blue-900/30 sm:col-span-2 lg:col-span-1"
         >
           <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white dark:bg-blue-800 rounded-xl lg:rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm mb-4 lg:mb-6">
             <DollarSign size={20} className="lg:w-6 lg:h-6" />
           </div>
           <p className="text-blue-600 dark:text-blue-400 text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-1 lg:mb-2">{t.netProfit}</p>
-          <h2 className="text-2xl lg:text-4xl font-black text-blue-700 dark:text-blue-300">৳{netProfit.toLocaleString()}</h2>
+          <h2 className="text-2xl lg:text-4xl font-black text-blue-700 dark:text-blue-300 tracking-tight">৳{netProfit.toLocaleString()}</h2>
         </motion.div>
       </div>
 

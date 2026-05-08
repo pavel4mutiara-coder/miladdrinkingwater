@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Dealer, WaterSale } from '../types';
 import { translations, Language } from '../locales';
+import ConfirmModal from './ui/ConfirmModal';
 
 export default function DealerManager({ lang }: { lang: Language }) {
   const t = translations[lang];
@@ -31,11 +32,12 @@ export default function DealerManager({ lang }: { lang: Language }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [newDealer, setNewDealer] = useState({ name: '', address: '', phone: '' });
   const [editDealer, setEditDealer] = useState({ id: '', name: '', address: '', phone: '' });
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null; type: 'dealer' | 'sale' }>({ isOpen: false, id: null, type: 'dealer' });
 
   useEffect(() => {
     const q = query(collection(db, 'dealers'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snap) => {
-      setDealers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Dealer)));
+      setDealers(snap.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Dealer)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'dealers'));
     return () => unsubscribe();
   }, []);
@@ -48,7 +50,10 @@ export default function DealerManager({ lang }: { lang: Language }) {
 
   const handleAddDealer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDealer.name || isSaving) return;
+    if (!newDealer.name || isSaving) {
+      if (!newDealer.name) alert(lang === 'bn' ? 'নাম প্রয়োজন' : 'Name is required');
+      return;
+    }
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'dealers'), {
@@ -66,7 +71,6 @@ export default function DealerManager({ lang }: { lang: Language }) {
   };
 
   const handleDeleteDealer = async (id: string) => {
-    if (!window.confirm(t.deleteDealerConfirm)) return;
     try {
       await deleteDoc(doc(db, 'dealers', id));
       if (selectedDealer?.id === id) setSelectedDealer(null);
@@ -135,39 +139,40 @@ export default function DealerManager({ lang }: { lang: Language }) {
             placeholder={t.searchDealer} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-sm dark:text-white"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-sm dark:text-white"
           />
         </div>
 
-        <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-250px)] lg:max-h-[calc(100vh-200px)] pb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 overflow-y-auto max-h-[calc(100vh-250px)] lg:max-h-[calc(100vh-200px)] pb-4">
           {filteredDealers.map(d => (
             <motion.div
               layout
               key={d.id}
               onClick={() => setSelectedDealer(d)}
-              className={`p-4 rounded-2xl cursor-pointer border transition-all ${
+              className={`p-4 rounded-2xl cursor-pointer border transition-all h-fit ${
                 selectedDealer?.id === d.id 
                   ? 'bg-cyan-600 dark:bg-blue-600 text-white border-cyan-600 dark:border-blue-500 shadow-lg shadow-cyan-600/10' 
                   : 'bg-white dark:bg-dark-surface border-gray-100 dark:border-dark-border hover:border-cyan-200 dark:hover:border-blue-400'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold dark:text-white">{d.name}</p>
-                  <p className={`text-xs mt-1 ${selectedDealer?.id === d.id ? 'text-cyan-100' : 'text-gray-400 dark:text-dark-muted'} flex items-center gap-1`}>
-                    <MapPin size={12} /> {d.address || (lang === 'bn' ? 'ঠিকানা নেই' : 'No address')}
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold dark:text-white truncate">{d.name}</p>
+                  <p className={`text-xs mt-1 ${selectedDealer?.id === d.id ? 'text-cyan-100' : 'text-gray-400 dark:text-dark-muted'} flex items-center gap-1 truncate`}>
+                    <MapPin size={12} className="shrink-0" /> {d.address || (lang === 'bn' ? 'ঠিকানা নেই' : 'No address')}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 shrink-0">
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleStartEdit(d); }}
-                    className={`${selectedDealer?.id === d.id ? 'text-cyan-100 dark:text-blue-100 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-blue-500'} transition-colors p-1`}
+                    className={`${selectedDealer?.id === d.id ? 'text-cyan-100 dark:text-blue-100 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-blue-500'} transition-colors p-1.5`}
                   >
                     <Pencil size={14} />
                   </button>
                   <button 
-                    onClick={(e) => { e.stopPropagation(); handleDeleteDealer(d.id); }}
-                    className={`${selectedDealer?.id === d.id ? 'text-cyan-800 dark:text-blue-900/50' : 'text-gray-300 dark:text-dark-muted hover:text-red-500'} transition-colors p-1`}
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, id: d.id, type: 'dealer' }); }}
+                    className={`relative z-10 p-1.5 rounded-xl transition-all ${selectedDealer?.id === d.id ? 'text-cyan-800 dark:text-blue-900/50 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'}`}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -175,7 +180,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
               </div>
             </motion.div>
           ))}
-          {dealers.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic">{lang === 'bn' ? 'কোন ডিলার যোগ করা হয়নি' : 'No dealers added'}</p>}
+          {dealers.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic col-span-full">{lang === 'bn' ? 'কোন ডিলার যোগ করা হয়নি' : 'No dealers added'}</p>}
         </div>
       </div>
 
@@ -245,6 +250,17 @@ export default function DealerManager({ lang }: { lang: Language }) {
         </AnimatePresence>
       </div>
 
+      {/* Modals */}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => confirmModal.id && handleDeleteDealer(confirmModal.id)}
+        title={t.deleteDealerConfirm}
+        message={lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই ডিলারকে মুছে ফেলতে চান?' : 'Are you sure you want to delete this dealer?'}
+        confirmText={t.delete}
+        cancelText={t.close}
+      />
+
       {/* Add Dealer Modal */}
       <AnimatePresence>
         {isAddingDealer && (
@@ -253,15 +269,15 @@ export default function DealerManager({ lang }: { lang: Language }) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-dark-surface rounded-[40px] p-8 lg:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border"
+              className="bg-white dark:bg-dark-surface rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border max-h-[90vh] flex flex-col"
             >
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl lg:text-3xl font-black dark:text-white">{t.addDealer}</h2>
+              <div className="flex justify-between items-center mb-6 sm:mb-8 shrink-0">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black dark:text-white">{t.addDealer}</h2>
                 <button onClick={() => setIsAddingDealer(false)} className="text-gray-400 dark:text-dark-muted hover:text-ink bg-gray-50 dark:bg-dark-bg p-2 rounded-full">
                   <X />
                 </button>
               </div>
-            <form onSubmit={handleAddDealer} className="space-y-4">
+            <form onSubmit={handleAddDealer} className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pb-2">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerName}</label>
                   <input 
@@ -269,7 +285,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                     required
                     value={newDealer.name} 
                     onChange={e => setNewDealer({...newDealer, name: e.target.value})} 
-                    className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-500/10 focus:border-cyan-500 transition-all dark:text-white text-sm" 
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all dark:text-white text-sm" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -279,7 +295,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                     required
                     value={newDealer.address} 
                     onChange={e => setNewDealer({...newDealer, address: e.target.value})} 
-                    className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-500/10 focus:border-cyan-500 transition-all dark:text-white text-sm" 
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all dark:text-white text-sm" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -289,7 +305,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                     required
                     value={newDealer.phone} 
                     onChange={e => setNewDealer({...newDealer, phone: e.target.value})} 
-                    className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-500/10 focus:border-cyan-500 transition-all dark:text-white text-sm" 
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all dark:text-white text-sm" 
                   />
                 </div>
                 <button type="submit" className="w-full py-4 bg-ink dark:bg-blue-600 text-white rounded-xl font-bold mt-2 hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 text-sm">{t.save}</button>
@@ -307,15 +323,15 @@ export default function DealerManager({ lang }: { lang: Language }) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-dark-surface rounded-[40px] p-8 lg:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border"
+              className="bg-white dark:bg-dark-surface rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border max-h-[90vh] flex flex-col"
             >
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl lg:text-3xl font-black dark:text-white">{t.editDealer}</h2>
+              <div className="flex justify-between items-center mb-6 sm:mb-8 shrink-0">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black dark:text-white">{t.editDealer}</h2>
                 <button onClick={() => setIsEditingDealer(false)} className="text-gray-400 dark:text-dark-muted hover:text-ink bg-gray-50 dark:bg-dark-bg p-2 rounded-full">
                   <X />
                 </button>
               </div>
-              <form onSubmit={handleUpdateDealer} className="space-y-4">
+              <form onSubmit={handleUpdateDealer} className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pb-2">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerName}</label>
                   <input 
@@ -323,7 +339,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                     required
                     value={editDealer.name} 
                     onChange={e => setEditDealer({...editDealer, name: e.target.value})} 
-                    className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm" 
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all dark:text-white text-sm" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -333,7 +349,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                     required
                     value={editDealer.address} 
                     onChange={e => setEditDealer({...editDealer, address: e.target.value})} 
-                    className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm" 
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm" 
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -343,7 +359,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                     required
                     value={editDealer.phone} 
                     onChange={e => setEditDealer({...editDealer, phone: e.target.value})} 
-                    className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm" 
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm" 
                   />
                 </div>
                 <button 
@@ -376,8 +392,8 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
     totalAmount: 0
   });
   const [editSaleForm, setEditSaleForm] = useState<WaterSale | null>(null);
-
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   // Sync total amount when qty or price changes for the ADD form
   useEffect(() => {
@@ -402,7 +418,7 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
     );
     const unsubscribe = onSnapshot(q, (snap) => {
       // Sort in memory
-      const salesData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as WaterSale));
+      const salesData = snap.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as WaterSale));
       salesData.sort((a, b) => {
         // Primary sort: date
         const dateCompare = b.date.localeCompare(a.date);
@@ -485,7 +501,6 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
   };
 
   const deleteSale = async (id: string) => {
-    if (!window.confirm(t.deleteSaleConfirm)) return;
     try {
       await deleteDoc(doc(db, 'water_sales', id));
     } catch (err) {
@@ -548,11 +563,11 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.date}</label>
-                <input type="date" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-3 py-2 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
+                <input type="date" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.product}</label>
-                <select value={form.productType} onChange={e => setForm({...form, productType: e.target.value as any})} className="w-full px-3 py-2 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20 appearance-none">
+                <select value={form.productType} onChange={e => setForm({...form, productType: e.target.value as any})} className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20 appearance-none">
                   <option value="20L Jar">{lang === 'bn' ? '২০লি যার' : '20L Jar'}</option>
                   <option value="5L Bottle">{lang === 'bn' ? '৫লি বোতল' : '5L Bottle'}</option>
                   <option value="Other">{lang === 'bn' ? 'অন্যান্য' : 'Other'}</option>
@@ -560,15 +575,15 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.quantity}</label>
-                <input type="number" required placeholder="0" value={form.quantity || ''} onChange={e => setForm({...form, quantity: Number(e.target.value)})} className="w-full px-3 py-2 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
+                <input type="number" required placeholder="0" value={form.quantity || ''} onChange={e => setForm({...form, quantity: Number(e.target.value)})} className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.unitPrice}</label>
-                <input type="number" required placeholder="0" value={form.unitPrice || ''} onChange={e => setForm({...form, unitPrice: Number(e.target.value)})} className="w-full px-3 py-2 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
+                <input type="number" required placeholder="0" value={form.unitPrice || ''} onChange={e => setForm({...form, unitPrice: Number(e.target.value)})} className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
               </div>
               <div className="col-span-2 lg:col-span-1 space-y-1">
                 <label className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest ml-1">{lang === 'bn' ? 'মোট টাকা' : 'Total Amount'}</label>
-                <input type="number" required placeholder="0" value={form.totalAmount || ''} onChange={e => handleTotalChange(Number(e.target.value))} className="w-full px-3 py-2 border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl text-xs font-black text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500/20 outline-none" />
+                <input type="number" required placeholder="0" value={form.totalAmount || ''} onChange={e => handleTotalChange(Number(e.target.value))} className="w-full px-4 py-2.5 border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl text-xs font-black text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500/20 outline-none" />
               </div>
             </div>
             <div className="flex gap-2">
@@ -591,51 +606,98 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
         )}
       </AnimatePresence>
 
-      <div className="overflow-x-auto -mx-4 lg:mx-0">
-        <table className="w-full">
-          <thead>
-            <tr className="text-left bg-gray-50/50 dark:bg-dark-bg/50">
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.date}</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.product}</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-center">{t.quantity}</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.unitPrice} (৳)</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.total} (৳)</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
-            {sales.map(sale => (
-              <tr key={sale.id} className="group hover:bg-gray-50/50 dark:hover:bg-dark-bg/50 transition-colors">
-                <td className="px-4 py-4 text-[10px] lg:text-xs font-medium text-gray-400 dark:text-dark-muted">{sale.date}</td>
-                <td className="px-4 py-4 text-xs font-bold text-ink dark:text-white">
-                    <div className="flex items-center gap-2">
-                       <div className={`w-1.5 h-1.5 rounded-full ${sale.productType === '20L Jar' ? 'bg-blue-500' : 'bg-cyan-500'}`} />
-                       {sale.productType}
-                    </div>
-                </td>
-                <td className="px-4 py-4 text-xs text-center font-bold font-mono dark:text-white">{sale.quantity}</td>
-                <td className="px-4 py-4 text-xs text-right font-mono text-gray-500 dark:text-dark-muted">৳{sale.unitPrice.toLocaleString()}</td>
-                <td className="px-4 py-4 text-emerald-600 dark:text-emerald-400 text-xs text-right font-black font-mono pr-2">৳{sale.totalAmount.toLocaleString()}</td>
-                <td className="px-4 py-4 text-right">
-                   <div className="flex items-center justify-end gap-2">
-                     <button 
-                       onClick={() => handleStartEditSale(sale)} 
-                       className="text-gray-300 dark:text-dark-muted hover:text-blue-500 transition-all p-1"
-                     >
-                        <Pencil size={14} />
-                     </button>
-                     <button 
-                       onClick={() => deleteSale(sale.id)} 
-                       className="text-gray-200 dark:text-dark-muted hover:text-red-500 transition-all p-1"
-                     >
-                        <Trash2 size={14} />
-                     </button>
-                   </div>
-                </td>
+      <div className="overflow-hidden">
+        {/* Desktop View Table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left bg-gray-50/50 dark:bg-dark-bg/50">
+                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.date}</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.product}</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-center">{t.quantity}</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.unitPrice} (৳)</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.total} (৳)</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
+              {sales.map(sale => (
+                <tr key={sale.id} className="group hover:bg-gray-50/50 dark:hover:bg-dark-bg/50 transition-colors">
+                  <td className="px-4 py-4 text-[10px] lg:text-xs font-medium text-gray-400 dark:text-dark-muted">{sale.date}</td>
+                  <td className="px-4 py-4 text-xs font-bold text-ink dark:text-white">
+                      <div className="flex items-center gap-2">
+                         <div className={`w-1.5 h-1.5 rounded-full ${sale.productType === '20L Jar' ? 'bg-blue-500' : 'bg-cyan-500'}`} />
+                         {sale.productType}
+                      </div>
+                  </td>
+                  <td className="px-4 py-4 text-xs text-center font-bold font-mono dark:text-white">{sale.quantity}</td>
+                  <td className="px-4 py-4 text-xs text-right font-mono text-gray-500 dark:text-dark-muted">৳{sale.unitPrice.toLocaleString()}</td>
+                  <td className="px-4 py-4 text-emerald-600 dark:text-emerald-400 text-xs text-right font-black font-mono pr-2">৳{sale.totalAmount.toLocaleString()}</td>
+                  <td className="px-4 py-4 text-right">
+                     <div className="flex items-center justify-end gap-2">
+                       <button 
+                         onClick={() => handleStartEditSale(sale)} 
+                         className="text-gray-300 dark:text-dark-muted hover:text-blue-500 transition-all p-1"
+                       >
+                          <Pencil size={14} />
+                       </button>
+                       <button 
+                         type="button"
+                         onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, id: sale.id }); }} 
+                         className="text-gray-200 dark:text-dark-muted hover:text-red-500 transition-all p-1"
+                       >
+                          <Trash2 size={14} />
+                       </button>
+                     </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile View Cards */}
+        <div className="md:hidden space-y-3">
+          {sales.map(sale => (
+            <div key={sale.id} className="bg-gray-50 dark:bg-dark-bg/40 p-4 rounded-2xl border border-gray-100 dark:border-dark-border">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${sale.productType === '20L Jar' ? 'bg-blue-500' : 'bg-cyan-500'}`} />
+                  <span className="text-xs font-bold dark:text-white">{sale.productType}</span>
+                </div>
+                <span className="text-[10px] font-medium text-gray-400 dark:text-dark-muted">{sale.date}</span>
+              </div>
+              <div className="flex items-end justify-between">
+                <div className="space-y-1">
+                  <p className="text-[10px] text-gray-400 dark:text-dark-muted uppercase font-bold tracking-widest">{t.quantity} & {t.unitPrice}</p>
+                  <p className="text-xs font-bold dark:text-white">
+                    {sale.quantity} × ৳{sale.unitPrice.toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold tracking-widest">{t.total}</p>
+                  <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">৳{sale.totalAmount.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-dark-border/50">
+                <button 
+                  onClick={() => handleStartEditSale(sale)}
+                  className="p-2 text-gray-400 hover:text-blue-500 bg-white dark:bg-dark-surface rounded-lg transition-colors border border-gray-100 dark:border-dark-border"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button 
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, id: sale.id }); }}
+                  className="p-2 text-gray-400 hover:text-red-500 bg-white dark:bg-dark-surface rounded-lg transition-colors border border-gray-100 dark:border-dark-border"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {sales.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic text-sm">{t.noSalesReport}</p>}
       </div>
 
@@ -746,6 +808,16 @@ function SalesRecorder({ dealerId, lang }: { dealerId: string, lang: Language })
       </AnimatePresence>
 
       {/* Sales Summary Section - Hidden as it is moved up */}
+      
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => confirmModal.id && deleteSale(confirmModal.id)}
+        title={t.confirmDelete}
+        message={lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই বিক্রয় তথ্য মুছে ফেলতে চান?' : 'Are you sure you want to delete this sale record?'}
+        confirmText={t.delete}
+        cancelText={t.close}
+      />
     </div>
   );
 }

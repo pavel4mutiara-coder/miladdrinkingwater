@@ -6,13 +6,14 @@ import { motion } from 'motion/react';
 
 interface ImageUploadProps {
   onUploadComplete: (url: string) => void;
+  onUploadStart?: () => void;
   onRemove: () => void;
   currentImageUrl?: string;
   label?: string;
   folder?: string;
 }
 
-export default function ImageUpload({ onUploadComplete, onRemove, currentImageUrl, label, folder = 'uploads' }: ImageUploadProps) {
+export default function ImageUpload({ onUploadComplete, onUploadStart, onRemove, currentImageUrl, label, folder = 'uploads' }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +39,7 @@ export default function ImageUpload({ onUploadComplete, onRemove, currentImageUr
 
   const uploadFile = (file: File) => {
     setUploading(true);
+    if (onUploadStart) onUploadStart();
     const fileName = `${Date.now()}_${file.name}`;
     const storageRef = ref(storage, `${folder}/${fileName}`);
     const uploadTask = uploadBytesResumable(storageRef, file);

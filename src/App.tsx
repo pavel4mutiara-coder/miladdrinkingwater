@@ -38,6 +38,8 @@ import DriverManager from './components/DriverManager';
 import CNGManager from './components/CNGManager';
 import ReportsManager from './components/ReportsManager';
 
+import ConfirmModal from './components/ui/ConfirmModal';
+
 export default function App() {
   const [user, setUser] = useState<{ uid: string } | null>(() => {
     return localStorage.getItem('milad_admin_session') === 'active' ? { uid: 'admin' } : null;
@@ -48,6 +50,7 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('milad_water_theme') === 'dark';
   });
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -73,10 +76,8 @@ export default function App() {
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
   const handleLogout = async () => {
-    if (window.confirm(lang === 'bn' ? 'আপনি কি নিশ্চিত?' : 'Are you sure?')) {
-      localStorage.removeItem('milad_admin_session');
-      setUser(null);
-    }
+    localStorage.removeItem('milad_admin_session');
+    setUser(null);
   };
 
   if (loading) {
@@ -264,7 +265,7 @@ export default function App() {
              <button onClick={toggleLang} className="text-xs font-bold text-gray-500 dark:text-dark-muted hover:text-ink dark:hover:text-white">
                {lang.toUpperCase()}
              </button>
-             <button onClick={handleLogout} className="text-red-500 hover:text-red-600">
+             <button onClick={() => setIsLogoutModalOpen(true)} className="text-red-500 hover:text-red-600">
                <LogOut size={18} />
              </button>
           </div>
@@ -301,7 +302,7 @@ export default function App() {
                    {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
                 </button>
              </div>
-            <button onClick={handleLogout} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-xl">
+            <button onClick={() => setIsLogoutModalOpen(true)} className="p-2 text-red-500 bg-red-50 dark:bg-red-900/20 rounded-xl">
               <LogOut size={18} />
             </button>
           </div>
@@ -331,15 +332,27 @@ export default function App() {
 
         {/* Mobile Nav */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 px-4 pb-6 z-40">
-           <div className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border p-2 rounded-[32px] shadow-2xl flex justify-between items-center overflow-x-auto custom-scrollbar no-scrollbar scroll-smooth">
+           <div className="bg-white/80 dark:bg-dark-surface/80 backdrop-blur-xl border border-gray-100 dark:border-dark-border p-2 rounded-[32px] shadow-2xl flex justify-between items-center overflow-x-auto no-scrollbar scroll-smooth">
               <MobileNavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={20} />} label={t.dashboard} />
               <MobileNavItem active={activeTab === 'dealers'} onClick={() => setActiveTab('dealers')} icon={<Droplets size={20} />} label={t.dealers} />
               <MobileNavItem active={activeTab === 'vehicles'} onClick={() => setActiveTab('vehicles')} icon={<Truck size={20} />} label={t.vehicles} />
               <MobileNavItem active={activeTab === 'cng'} onClick={() => setActiveTab('cng')} icon={<Smartphone size={20} />} label={t.cng} />
               <MobileNavItem active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} icon={<DollarSign size={20} />} label={t.expenses} />
+              <MobileNavItem active={activeTab === 'drivers'} onClick={() => setActiveTab('drivers')} icon={<Users size={20} />} label={t.drivers} />
               <MobileNavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<BarChart3 size={20} />} label={t.reports} />
            </div>
         </nav>
+
+        <ConfirmModal 
+          isOpen={isLogoutModalOpen}
+          onClose={() => setIsLogoutModalOpen(false)}
+          onConfirm={handleLogout}
+          title={t.logout}
+          message={lang === 'bn' ? 'আপনি কি লগআউট করতে চান?' : 'Are you sure you want to logout?'}
+          confirmText={t.logout}
+          cancelText={t.close}
+          isDanger={true}
+        />
       </main>
     </div>
   );
@@ -366,14 +379,14 @@ function MobileNavItem({ active, onClick, icon, label }: { active: boolean, onCl
   return (
     <button 
       onClick={onClick}
-      className={`flex flex-col items-center gap-1 p-2 min-w-[64px] rounded-2xl transition-all ${
+      className={`flex flex-col items-center gap-1 p-2 min-w-[56px] sm:min-w-[64px] rounded-2xl transition-all ${
         active 
           ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
           : 'text-gray-400 dark:text-dark-muted'
       }`}
     >
       {icon}
-      <span className="text-[8px] font-black uppercase tracking-tighter">{label}</span>
+      <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-tighter whitespace-nowrap">{label}</span>
     </button>
   );
 }

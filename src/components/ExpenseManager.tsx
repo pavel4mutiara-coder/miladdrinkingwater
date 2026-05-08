@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { CompanyExpense, ExpenseCategory } from '../types';
 import { translations, Language } from '../locales';
+import ConfirmModal from './ui/ConfirmModal';
 
 export default function ExpenseManager({ lang }: { lang: Language }) {
   const t = translations[lang];
@@ -26,6 +27,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
   const [showAdd, setShowAdd] = useState(false);
   const [isManagingCategories, setIsManagingCategories] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const [newExpense, setNewExpense] = useState({ 
     date: new Date().toISOString().split('T')[0], 
     category: '', 
@@ -39,7 +41,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
     // Simplified query to avoid composite index requirements
     const qExpenses = query(collection(db, 'company_expenses'));
     const unsubscribeExpenses = onSnapshot(qExpenses, (snap) => {
-      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as CompanyExpense));
+      const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as CompanyExpense));
       // Sort in memory
       data.sort((a, b) => {
         const dateCompare = (b.date || "").localeCompare(a.date || "");
@@ -53,7 +55,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
 
     const qCat = query(collection(db, 'expense_categories'), orderBy('name', 'asc'));
     const unsubscribeCats = onSnapshot(qCat, (snap) => {
-      const cats = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ExpenseCategory));
+      const cats = snap.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as ExpenseCategory));
       setCategories(cats);
       if (cats.length > 0 && !newExpense.category) {
         setNewExpense(prev => ({ ...prev, category: cats[0].name }));
@@ -62,7 +64,7 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
 
     const qDealers = query(collection(db, 'dealers'), orderBy('name', 'asc'));
     const unsubscribeDealers = onSnapshot(qDealers, (snap) => {
-      setDealers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setDealers(snap.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) })));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'dealers'));
 
     return () => {
@@ -74,7 +76,10 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSaving) return;
+    if (isSaving || !newExpense.category || !newExpense.amount) {
+      if (!newExpense.category || !newExpense.amount) alert(lang === 'bn' ? 'ক্যাটাগরি এবং টাকার পরিমাণ প্রয়োজন' : 'Category and Amount required');
+      return;
+    }
     setIsSaving(true);
     try {
       const expenseData: any = {
@@ -96,7 +101,6 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(t.confirmDelete)) return;
     try {
       await deleteDoc(doc(db, 'company_expenses', id));
     } catch (err) {
@@ -299,9 +303,13 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
                   </td>
                   <td className="px-4 lg:px-8 py-4 lg:py-5 text-right font-black text-ink dark:text-white text-xs lg:text-sm">৳{exp.amount.toLocaleString()}</td>
                   <td className="px-4 lg:px-8 py-4 lg:py-5 text-right">
-                    <button onClick={() => handleDelete(exp.id)} className="text-gray-200 dark:text-dark-muted hover:text-red-500 transition-all p-1">
-                      <Trash2 size={16} className="lg:w-5 lg:h-5" />
-                    </button>
+                  <button 
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, id: exp.id }); }} 
+                    className="text-gray-200 dark:text-dark-muted hover:text-red-500 transition-all p-1"
+                  >
+                    <Trash2 size={16} className="lg:w-5 lg:h-5" />
+                  </button>
                   </td>
                 </tr>
               ))}
@@ -324,12 +332,24 @@ export default function ExpenseManager({ lang }: { lang: Language }) {
         categories={categories} 
         lang={lang}
       />
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => confirmModal.id && handleDelete(confirmModal.id)}
+        title={t.confirmDelete}
+        message={lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই খরচ রেকর্ড মুছে ফেলতে চান?' : 'Are you sure you want to delete this expense record?'}
+        confirmText={t.delete}
+        cancelText={t.close}
+      />
     </div>
   );
 }
 
 function CategoryModal({ isOpen, onClose, categories, lang }: { isOpen: boolean, onClose: () => void, categories: ExpenseCategory[], lang: Language }) {
   const [newName, setNewName] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+  const t = translations[lang];
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -347,7 +367,6 @@ function CategoryModal({ isOpen, onClose, categories, lang }: { isOpen: boolean,
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(lang === 'bn' ? 'এই ক্যাটেগরি ডিলিট করতে চান? এটি ঐ ক্যাটেগরির খরচ ডিলিট করবে না।' : 'Delete this category? It will not delete associated expenses.')) return;
     try {
       await deleteDoc(doc(db, 'expense_categories', id));
     } catch (err) {
@@ -378,22 +397,36 @@ function CategoryModal({ isOpen, onClose, categories, lang }: { isOpen: boolean,
                 placeholder={lang === 'bn' ? "নতুন ক্যাটেগরির নাম..." : "New category name..."} 
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
-                className="flex-1 px-4 py-2 lg:py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl lg:rounded-2xl focus:outline-none focus:border-blue-500 dark:text-white text-sm"
+                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 dark:text-white text-sm"
               />
-              <button className="bg-ink dark:bg-blue-600 text-white px-4 py-2 lg:py-3 rounded-xl lg:rounded-2xl font-bold text-sm hover:bg-black dark:hover:bg-blue-700 transition-colors uppercase tracking-wider">{lang === 'bn' ? 'যোগ করুন' : 'Add'}</button>
+              <button className="bg-ink dark:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-black dark:hover:bg-blue-700 transition-colors uppercase tracking-wider">{lang === 'bn' ? 'যোগ করুন' : 'Add'}</button>
             </form>
 
             <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
               {categories.map(c => (
                 <div key={c.id} className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg/50 rounded-xl lg:rounded-2xl group transition-all hover:bg-gray-100 dark:hover:bg-dark-bg">
                   <span className="font-medium text-sm text-ink dark:text-white">{c.name}</span>
-                  <button onClick={() => handleDelete(c.id)} className="text-gray-300 dark:text-dark-muted hover:text-red-500 transition-colors">
+                  <button 
+                    type="button"
+                    onClick={() => setConfirmModal({ isOpen: true, id: c.id })}
+                    className="text-gray-300 dark:text-dark-muted hover:text-red-500 transition-colors"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
               {categories.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted text-sm italic py-4">{lang === 'bn' ? 'কোন ক্যাটেগরি নেই' : 'No categories'}</p>}
             </div>
+
+            <ConfirmModal 
+              isOpen={confirmModal.isOpen}
+              onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+              onConfirm={() => confirmModal.id && handleDelete(confirmModal.id)}
+              title={lang === 'bn' ? 'ক্যাটেগরি ডিলিট?' : 'Delete Category?'}
+              message={lang === 'bn' ? 'এই ক্যাটেগরি ডিলিট করতে চান? এটি ঐ ক্যাটেগরির খরচ ডিলিট করবে না।' : 'Delete this category? It will not delete associated expenses.'}
+              confirmText={lang === 'bn' ? 'ডিলিট' : 'Delete'}
+              cancelText={lang === 'bn' ? 'বন্ধ করুন' : 'Close'}
+            />
           </motion.div>
         </div>
       )}

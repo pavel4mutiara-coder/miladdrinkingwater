@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { CNG, CNGIncome, CNGExpense, Driver } from '../types';
 import { translations, Language } from '../locales';
+import ConfirmModal from './ui/ConfirmModal';
 
 interface CNGManagerProps {
   lang: Language;
@@ -34,6 +35,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
   const [selectedCng, setSelectedCng] = useState<CNG | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null; type: 'cng' | 'income' | 'expense' }>({ isOpen: false, id: null, type: 'cng' });
   const t = translations[lang];
 
   const [form, setForm] = useState({
@@ -51,7 +53,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
     const qDrivers = query(collection(db, 'drivers'), orderBy('name', 'asc'));
     
     const unsubCng = onSnapshot(qCng, (snapshot) => {
-      setCngs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CNG)));
+      setCngs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as CNG)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'cng_rickshaws'));
 
     const unsubDrivers = onSnapshot(qDrivers, (snapshot) => {
@@ -71,10 +73,10 @@ export default function CNGManager({ lang }: CNGManagerProps) {
     const qExp = query(collection(db, 'cng_expenses'), where('cngId', '==', selectedCng.id), orderBy('date', 'desc'));
 
     const unsubInc = onSnapshot(qInc, (snapshot) => {
-      setIncomes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CNGIncome)));
+      setIncomes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as CNGIncome)));
     });
     const unsubExp = onSnapshot(qExp, (snapshot) => {
-      setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CNGExpense)));
+      setExpenses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as CNGExpense)));
     });
 
     return () => {
@@ -85,7 +87,10 @@ export default function CNGManager({ lang }: CNGManagerProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSaving) return;
+    if (isSaving || !form.cngNumber || !form.driverId) {
+      if (!form.cngNumber || !form.driverId) alert(lang === 'bn' ? 'নম্বর এবং ড্রাইভার প্রয়োজন' : 'Number and Driver required');
+      return;
+    }
     setIsSaving(true);
     try {
       await addDoc(collection(db, 'cng_rickshaws'), {
@@ -137,6 +142,34 @@ export default function CNGManager({ lang }: CNGManagerProps) {
     }
   };
 
+  const handleDeleteCNG = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'cng_rickshaws', id));
+      if (selectedCng?.id === id) setSelectedCng(null);
+    } catch (err) {
+      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete CNG rickshaw.');
+      handleFirestoreError(err, OperationType.DELETE, 'cng_rickshaws');
+    }
+  };
+
+  const handleDeleteIncome = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'cng_income', id));
+    } catch (err) {
+      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete income.');
+      handleFirestoreError(err, OperationType.DELETE, 'cng_income');
+    }
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'cng_expenses', id));
+    } catch (err) {
+      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete expense.');
+      handleFirestoreError(err, OperationType.DELETE, 'cng_expenses');
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-full min-h-[600px]">
       {/* Sidebar List */}
@@ -150,27 +183,42 @@ export default function CNGManager({ lang }: CNGManagerProps) {
 
         <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
           {cngs.map(cng => (
-            <button
+            <div
               key={cng.id}
-              onClick={() => setSelectedCng(cng)}
-              className={`w-full text-left p-5 rounded-[32px] border transition-all ${
-                selectedCng?.id === cng.id 
-                  ? 'bg-ink dark:bg-blue-600 border-ink dark:border-blue-500 text-white shadow-xl shadow-blue-600/10' 
-                  : 'bg-white dark:bg-dark-surface border-gray-50 dark:border-dark-border text-ink dark:text-white hover:bg-gray-50 dark:hover:bg-dark-bg'
-              }`}
+              className="relative group"
             >
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-2xl ${selectedCng?.id === cng.id ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
-                  <Smartphone className={selectedCng?.id === cng.id ? 'text-white' : 'text-blue-600 dark:text-blue-400'} size={24} />
+              <button
+                onClick={() => setSelectedCng(cng)}
+                className={`w-full text-left p-5 rounded-[32px] border transition-all ${
+                  selectedCng?.id === cng.id 
+                    ? 'bg-ink dark:bg-blue-600 border-ink dark:border-blue-500 text-white shadow-xl shadow-blue-600/10' 
+                    : 'bg-white dark:bg-dark-surface border-gray-50 dark:border-dark-border text-ink dark:text-white hover:bg-gray-50 dark:hover:bg-dark-bg'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-2xl ${selectedCng?.id === cng.id ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+                    <Smartphone className={selectedCng?.id === cng.id ? 'text-white' : 'text-blue-600 dark:text-blue-400'} size={24} />
+                  </div>
+                  <div>
+                    <p className="font-black text-lg">{cng.cngNumber}</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-widest ${selectedCng?.id === cng.id ? 'text-blue-200' : 'text-gray-400 dark:text-dark-muted'}`}>
+                      {drivers.find(d => d.id === cng.driverId)?.name || 'NO DRIVER'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-black text-lg">{cng.cngNumber}</p>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${selectedCng?.id === cng.id ? 'text-blue-200' : 'text-gray-400 dark:text-dark-muted'}`}>
-                    {drivers.find(d => d.id === cng.driverId)?.name || 'NO DRIVER'}
-                  </p>
-                </div>
-              </div>
-            </button>
+              </button>
+              <button 
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, id: cng.id, type: 'cng' }); }}
+                className={`absolute top-4 right-4 p-2 rounded-full transition-all ${
+                  selectedCng?.id === cng.id 
+                    ? 'text-white/40 hover:text-white hover:bg-white/10' 
+                    : 'text-gray-300 hover:text-red-500 hover:bg-red-50'
+                }`}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -255,7 +303,11 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                           </div>
                           <div className="flex items-center gap-2 sm:gap-4">
                             <span className="font-black text-green-600 text-xs sm:text-base">+ ৳{inc.amount}</span>
-                            <button onClick={() => deleteDoc(doc(db, 'cng_income', inc.id))} className="opacity-0 lg:group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all">
+                            <button 
+                              type="button"
+                              onClick={() => setConfirmModal({ isOpen: true, id: inc.id, type: 'income' })} 
+                              className="opacity-0 lg:group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all"
+                            >
                               <Trash2 size={14} className="sm:w-4 sm:h-4" />
                             </button>
                           </div>
@@ -319,7 +371,11 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                           </div>
                           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                             <span className="font-black text-red-500 text-xs sm:text-base">- ৳{exp.amount}</span>
-                            <button onClick={() => deleteDoc(doc(db, 'cng_expenses', exp.id))} className="opacity-0 lg:group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all">
+                            <button 
+                              type="button"
+                              onClick={() => setConfirmModal({ isOpen: true, id: exp.id, type: 'expense' })} 
+                              className="opacity-0 lg:group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all"
+                            >
                               <Trash2 size={14} className="sm:w-4 sm:h-4" />
                             </button>
                           </div>
@@ -344,6 +400,27 @@ export default function CNGManager({ lang }: CNGManagerProps) {
       </div>
 
       {/* Add CNG Modal */}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => {
+          if (!confirmModal.id) return;
+          if (confirmModal.type === 'cng') handleDeleteCNG(confirmModal.id);
+          else if (confirmModal.type === 'income') handleDeleteIncome(confirmModal.id);
+          else if (confirmModal.type === 'expense') handleDeleteExpense(confirmModal.id);
+        }}
+        title={t.confirmDelete}
+        message={
+          confirmModal.type === 'cng' 
+            ? (lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই সিএনজিটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this CNG rickshaw?')
+            : confirmModal.type === 'income'
+            ? (lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই আয়ের তথ্য মুছে ফেলতে চান?' : 'Are you sure you want to delete this income record?')
+            : (lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই খরচের তথ্য মুছে ফেলতে চান?' : 'Are you sure you want to delete this expense record?')
+        }
+        confirmText={t.delete}
+        cancelText={t.close}
+      />
+
       {isAdding && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
            <motion.div 
@@ -367,7 +444,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                     placeholder="SYL-XXX"
                     value={form.cngNumber}
                     onChange={(e) => setForm({...form, cngNumber: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-3 px-5 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                   />
                </div>
 
@@ -377,7 +454,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                     required
                     value={form.driverId}
                     onChange={(e) => setForm({...form, driverId: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-3 px-5 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                   >
                      <option value="">Choose Driver</option>
                      {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -392,7 +469,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                       type="number"
                       value={form.dailyPayment || ''}
                       onChange={(e) => setForm({...form, dailyPayment: Number(e.target.value)})}
-                      className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-3 px-5 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                      className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                     />
                   </div>
                   <div className="space-y-1">
@@ -401,7 +478,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                       type="number"
                       value={form.dueAmount || ''}
                       onChange={(e) => setForm({...form, dueAmount: Number(e.target.value)})}
-                      className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-3 px-5 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                      className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                     />
                   </div>
                </div>

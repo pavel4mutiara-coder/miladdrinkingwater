@@ -21,6 +21,7 @@ import {
 import { Driver } from '../types';
 import { translations, Language } from '../locales';
 import ImageUpload from './ui/ImageUpload';
+import ConfirmModal from './ui/ConfirmModal';
 
 interface DriverManagerProps {
   lang: Language;
@@ -32,6 +33,7 @@ export default function DriverManager({ lang }: DriverManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   const t = translations[lang];
 
   const [form, setForm] = useState({
@@ -47,14 +49,17 @@ export default function DriverManager({ lang }: DriverManagerProps) {
   useEffect(() => {
     const q = query(collection(db, 'drivers'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setDrivers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Driver)));
+      setDrivers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Driver)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'drivers'));
     return () => unsubscribe();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSaving) return;
+    if (isSaving || !form.name || !form.phone || !form.nid) {
+      if (!form.name || !form.phone || !form.nid) alert(lang === 'bn' ? 'নাম, ফোন এবং এনআইডি প্রয়োজন' : 'Name, Phone and NID required');
+      return;
+    }
     setIsSaving(true);
 
     try {
@@ -93,10 +98,10 @@ export default function DriverManager({ lang }: DriverManagerProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(t.confirmDelete)) return;
     try {
       await deleteDoc(doc(db, 'drivers', id));
     } catch (err) {
+      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete driver.');
       handleFirestoreError(err, OperationType.DELETE, 'drivers');
     }
   };
@@ -136,7 +141,7 @@ export default function DriverManager({ lang }: DriverManagerProps) {
           placeholder={lang === 'bn' ? 'ড্রাইভার খুজুন...' : t.search}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl py-4 pl-12 pr-6 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white"
+          className="w-full bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl py-2.5 pl-12 pr-6 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
         />
       </div>
 
@@ -168,10 +173,18 @@ export default function DriverManager({ lang }: DriverManagerProps) {
                   </div>
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(driver)} className="p-2 bg-gray-50 dark:bg-dark-bg text-gray-400 hover:text-blue-500 rounded-xl transition-colors">
+                  <button 
+                    type="button"
+                    onClick={() => handleEdit(driver)} 
+                    className="p-2 bg-gray-50 dark:bg-dark-bg text-gray-400 hover:text-blue-500 rounded-xl transition-colors"
+                  >
                     <Edit2 size={16} />
                   </button>
-                  <button onClick={() => handleDelete(driver.id)} className="p-2 bg-gray-50 dark:bg-dark-bg text-gray-400 hover:text-red-500 rounded-xl transition-colors">
+                  <button 
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, id: driver.id }); }} 
+                    className="p-2 bg-gray-50 dark:bg-dark-bg text-gray-400 hover:text-red-500 rounded-xl transition-colors"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -208,6 +221,16 @@ export default function DriverManager({ lang }: DriverManagerProps) {
       </div>
 
       {/* Modal */}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => confirmModal.id && handleDelete(confirmModal.id)}
+        title={t.confirmDelete}
+        message={lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই ড্রাইভারকে মুছে ফেলতে চান?' : 'Are you sure you want to delete this driver?'}
+        confirmText={t.delete}
+        cancelText={t.close}
+      />
+
       {isAdding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <motion.div 
@@ -245,7 +268,7 @@ export default function DriverManager({ lang }: DriverManagerProps) {
                     value={form.name}
                     onChange={(e) => setForm({...form, name: e.target.value})}
                     placeholder="e.g. Abul Kashem"
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-1">
@@ -256,7 +279,7 @@ export default function DriverManager({ lang }: DriverManagerProps) {
                     value={form.phone}
                     onChange={(e) => setForm({...form, phone: e.target.value})}
                     placeholder="017xxxxxxxx"
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-1">
@@ -266,7 +289,7 @@ export default function DriverManager({ lang }: DriverManagerProps) {
                     type="text"
                     value={form.nid}
                     onChange={(e) => setForm({...form, nid: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-1">
@@ -276,7 +299,7 @@ export default function DriverManager({ lang }: DriverManagerProps) {
                     type="text"
                     value={form.licenseNumber}
                     onChange={(e) => setForm({...form, licenseNumber: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-1">
@@ -286,7 +309,7 @@ export default function DriverManager({ lang }: DriverManagerProps) {
                     type="tel"
                     value={form.emergencyContact}
                     onChange={(e) => setForm({...form, emergencyContact: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-2">
@@ -295,7 +318,7 @@ export default function DriverManager({ lang }: DriverManagerProps) {
                     required
                     value={form.address}
                     onChange={(e) => setForm({...form, address: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white h-20 resize-none text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white h-20 resize-none text-sm"
                   />
                 </div>
               </div>

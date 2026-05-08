@@ -13,8 +13,27 @@
   --color-dark-muted: #94a3b8;
 }
 
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 body {
-  @apply font-sans bg-bg-warm text-ink transition-colors duration-300;
+  @apply font-sans bg-bg-warm text-ink transition-colors duration-300 overflow-x-hidden;
+}
+
+/* Touch Targets & Mobile Fixes */
+input, select, textarea, button {
+  @apply min-h-[44px];
+}
+
+@media (max-width: 640px) {
+  .modal-container {
+    @apply p-4 max-h-[90vh] overflow-y-auto;
+  }
 }
 
 .dark body {

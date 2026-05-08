@@ -31,6 +31,7 @@ import {
 import { Vehicle, Maintenance, VehicleIncome } from '../types';
 import { translations, Language } from '../locales';
 import ImageUpload from './ui/ImageUpload';
+import ConfirmModal from './ui/ConfirmModal';
 
 export default function VehicleManager({ lang }: { lang: Language }) {
   const t = translations[lang];
@@ -39,7 +40,13 @@ export default function VehicleManager({ lang }: { lang: Language }) {
   const [isAddingVehicle, setIsAddingVehicle] = useState(false);
   const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null; type: 'vehicle' | 'log'; collection?: string }>({
+    isOpen: false,
+    id: null,
+    type: 'vehicle'
+  });
   const [newVehicle, setNewVehicle] = useState({ 
     vehicleNumber: '', 
     name: '', 
@@ -54,14 +61,22 @@ export default function VehicleManager({ lang }: { lang: Language }) {
   useEffect(() => {
     const q = query(collection(db, 'vehicles'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snap) => {
-      setVehicles(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle)));
+      setVehicles(snap.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Vehicle)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'vehicles'));
     return () => unsubscribe();
   }, []);
 
   const handleAddVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVehicle.vehicleNumber || isSaving) return;
+    if (!newVehicle.vehicleNumber || !newVehicle.name || !newVehicle.type || isSaving || isUploading) {
+      if (!newVehicle.vehicleNumber || !newVehicle.name || !newVehicle.type) {
+        alert(lang === 'bn' ? 'অনুগ্রহ করে নম্বর, নাম এবং ধরন পূরণ করুন' : 'Please fill number, name and type');
+      }
+      if (isUploading) {
+        alert(lang === 'bn' ? 'অনুগ্রহ করে ছবি আপলোড শেষ হওয়া পর্যন্ত অপেক্ষা করুন' : 'Please wait for image upload to complete');
+      }
+      return;
+    }
     setIsSaving(true);
     try {
       if (editingVehicleId) {
@@ -111,20 +126,20 @@ export default function VehicleManager({ lang }: { lang: Language }) {
   };
 
   const handleDeleteVehicle = async (id: string) => {
-    if (!confirm(t.deleteVehicleConfirm)) return;
     try {
       await deleteDoc(doc(db, 'vehicles', id));
       if (selectedVehicle?.id === id) setSelectedVehicle(null);
     } catch (err) {
-      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete.');
+      console.error("Vehicle Delete Error:", err);
+      alert(lang === 'bn' ? 'গাড়ি মুছতে সমস্যা হয়েছে। দয়া করে এডমিন এক্সেস আছে কি না নিশ্চিত করুন।' : 'Failed to delete vehicle. Please ensure you have admin access.');
       handleFirestoreError(err, OperationType.DELETE, 'vehicles');
     }
   };
 
   const filteredVehicles = vehicles.filter(v => 
-    v.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.type.toLowerCase().includes(searchQuery.toLowerCase())
+    (v.vehicleNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (v.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (v.type || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -148,7 +163,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
             placeholder={lang === 'bn' ? "গাড়ি খুঁজুন..." : "Search vehicles..."} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm dark:text-white"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm dark:text-white"
           />
         </div>
 
@@ -168,7 +183,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                 <div className={`px-2 py-1 ${selectedVehicle?.id === v.id ? 'bg-white/20 text-white' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'} rounded text-[10px] font-black uppercase tracking-tighter`}>
                   {v.vehicleNumber}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3 sm:gap-2">
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleEditVehicle(v); }}
                     className={`${selectedVehicle?.id === v.id ? 'text-white/50 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-blue-500'}`}
@@ -176,10 +191,14 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                     <Edit2 size={14} />
                   </button>
                   <button 
-                    onClick={(e) => { e.stopPropagation(); handleDeleteVehicle(v.id); }}
-                    className={`${selectedVehicle?.id === v.id ? 'text-white/50 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-red-500'}`}
+                    type="button"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setConfirmModal({ isOpen: true, id: v.id, type: 'vehicle' });
+                    }}
+                    className={`relative z-10 p-2.5 -m-1 rounded-xl transition-all ${selectedVehicle?.id === v.id ? 'text-white/50 hover:text-white' : 'text-gray-300 dark:text-dark-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'}`}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -291,7 +310,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-dark-surface rounded-3xl sm:rounded-[40px] p-5 sm:p-8 lg:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border"
+              className="bg-white dark:bg-dark-surface rounded-3xl sm:rounded-[40px] p-5 sm:p-8 lg:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border max-h-[90vh] flex flex-col"
             >
               <button 
                 onClick={() => {
@@ -299,31 +318,35 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   setEditingVehicleId(null);
                   setNewVehicle({ vehicleNumber: '', name: '', type: '', imageURL: '', registrationNumber: '', fitnessDate: '', insuranceDate: '', taxTokenDate: '' });
                 }}
-                className="absolute top-4 right-4 sm:top-8 sm:right-8 text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full"
+                className="absolute top-4 right-4 sm:top-8 sm:right-8 text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full z-10"
               >
                 <X size={18} />
               </button>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black mb-4 sm:mb-8 dark:text-white">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black mb-4 sm:mb-8 dark:text-white shrink-0 px-1">
                 {editingVehicleId ? t.editVehicle : t.addVehicle}
               </h2>
-              <form onSubmit={handleAddVehicle} className="space-y-3 sm:space-y-4 max-h-[75vh] sm:max-h-[85vh] overflow-y-auto px-1 custom-scrollbar">
+              <form onSubmit={handleAddVehicle} className="space-y-3 sm:space-y-4 overflow-y-auto px-1 custom-scrollbar flex-1 pb-4">
                   <ImageUpload 
                     label="Vehicle Photo"
                     currentImageUrl={newVehicle.imageURL}
-                    onUploadComplete={(url) => setNewVehicle({...newVehicle, imageURL: url})}
+                    onUploadStart={() => setIsUploading(true)}
+                    onUploadComplete={(url) => {
+                      setNewVehicle({...newVehicle, imageURL: url});
+                      setIsUploading(false);
+                    }}
                     onRemove={() => setNewVehicle({...newVehicle, imageURL: ''})}
                     folder="vehicles"
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1 col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="space-y-1 col-span-1 md:col-span-2">
                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.vehicleNumber}</label>
                        <input 
                          required
                          type="text" 
                          value={newVehicle.vehicleNumber} 
                          onChange={e => setNewVehicle({...newVehicle, vehicleNumber: e.target.value})} 
-                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm"
+                         className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all dark:text-white text-sm"
                          placeholder="e.g. D-123"
                        />
                     </div>
@@ -334,7 +357,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          type="text" 
                          value={newVehicle.name} 
                          onChange={e => setNewVehicle({...newVehicle, name: e.target.value})} 
-                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm"
+                         className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all dark:text-white text-sm"
                          placeholder="e.g. Pickup"
                        />
                     </div>
@@ -345,7 +368,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          type="text" 
                          value={newVehicle.type} 
                          onChange={e => setNewVehicle({...newVehicle, type: e.target.value})} 
-                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all dark:text-white text-sm"
+                         className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all dark:text-white text-sm"
                          placeholder="e.g. Mini Truck"
                        />
                     </div>
@@ -355,7 +378,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          type="text" 
                          value={newVehicle.registrationNumber} 
                          onChange={e => setNewVehicle({...newVehicle, registrationNumber: e.target.value})} 
-                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none dark:text-white text-sm"
+                         className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                        />
                     </div>
                     <div className="space-y-1">
@@ -364,7 +387,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          type="date" 
                          value={newVehicle.fitnessDate} 
                          onChange={e => setNewVehicle({...newVehicle, fitnessDate: e.target.value})} 
-                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none dark:text-white text-sm"
+                         className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                        />
                     </div>
                     <div className="space-y-1">
@@ -373,7 +396,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          type="date" 
                          value={newVehicle.insuranceDate} 
                          onChange={e => setNewVehicle({...newVehicle, insuranceDate: e.target.value})} 
-                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none dark:text-white text-sm"
+                         className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                        />
                     </div>
                     <div className="space-y-1">
@@ -382,7 +405,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          type="date" 
                          value={newVehicle.taxTokenDate} 
                          onChange={e => setNewVehicle({...newVehicle, taxTokenDate: e.target.value})} 
-                         className="w-full px-5 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none dark:text-white text-sm"
+                         className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                        />
                     </div>
                  </div>
@@ -397,6 +420,17 @@ export default function VehicleManager({ lang }: { lang: Language }) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Modals */}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen && confirmModal.type === 'vehicle'}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => confirmModal.id && handleDeleteVehicle(confirmModal.id)}
+        title={t.deleteVehicleConfirm}
+        message={lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এই গাড়িটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this vehicle?'}
+        confirmText={t.delete}
+        cancelText={t.close}
+      />
     </div>
   );
 }
@@ -549,6 +583,7 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
   const [showAdd, setShowAdd] = useState(false);
   const [newData, setNewData] = useState<any>({});
   const [localSearch, setLocalSearch] = useState('');
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   useEffect(() => {
     // Simplified query to avoid composite index requirements
@@ -587,7 +622,6 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(t.confirmDelete)) return;
     try {
       await deleteDoc(doc(db, collectionName, id));
     } catch (err) {
@@ -678,8 +712,9 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
                 ))}
                 <td className="px-4 lg:px-6 py-4 text-right">
                   <button 
-                    onClick={() => handleDelete(log.id)}
-                    className="text-gray-300 dark:text-dark-muted hover:text-red-500"
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, id: log.id }); }}
+                    className="text-gray-300 dark:text-dark-muted hover:text-red-500 transition-all p-1"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -690,6 +725,16 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
         </table>
         {filteredLogs.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic text-sm">{localSearch ? (lang === 'bn' ? 'কোন ফলাফল পাওয়া যায়নি' : 'No results found') : (noDataMessage || t.noSalesReport)}</p>}
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={() => confirmModal.id && handleDelete(confirmModal.id)}
+        title={t.confirmDelete}
+        message={lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this record?'}
+        confirmText={t.delete}
+        cancelText={t.close}
+      />
     </div>
   );
 }

@@ -70,24 +70,24 @@ export default function Dashboard({ lang }: { lang: Language }) {
   const waterNet = stats.totalDealerSales - stats.totalExpenses;
 
   return (
-    <div className="space-y-6 lg:space-y-12">
-      <header>
-        <h1 className="text-2xl lg:text-3xl font-bold tracking-tight dark:text-white">{t.dashboardOverview}</h1>
-        <p className="text-gray-500 dark:text-dark-muted mt-1">{t.allStats}</p>
+    <div className="space-y-6 lg:space-y-10 px-1 sm:px-0">
+      <header className="px-1 sm:px-0">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight dark:text-white">{t.dashboardOverview}</h1>
+        <p className="text-gray-400 dark:text-dark-muted mt-1 text-xs sm:text-sm font-medium">{t.allStats}</p>
       </header>
 
       {/* --- Vehicle Business Section --- */}
       <section className="space-y-4 lg:space-y-6">
-        <div className="flex items-center gap-3">
-           <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400"><Truck size={18} /></div>
-           <h2 className="text-lg lg:text-xl font-bold dark:text-white">{t.vehicleBusiness}</h2>
+        <div className="flex items-center gap-3 px-2 sm:px-0">
+           <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400"><Truck size={18} /></div>
+           <h2 className="text-base sm:text-lg lg:text-xl font-bold dark:text-white uppercase tracking-wider">{t.vehicleBusiness}</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           <StatCard label={t.totalVehicleIncome} value={stats.totalVehicleIncome} icon={<TrendingUp className="text-emerald-500" />} color="bg-emerald-50 dark:bg-emerald-900/20" />
           <StatCard label={t.totalMaintenanceCost} value={stats.totalMaintenanceCost} icon={<TrendingDown className="text-rose-500" />} color="bg-rose-50 dark:bg-rose-900/20" />
-          <div className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm">
-             <p className="text-gray-400 dark:text-dark-muted text-xs font-medium mb-1">{t.vehicleNetProfit}</p>
-             <p className={`text-xl lg:text-2xl font-black ${vehicleNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+          <div className="bg-white dark:bg-dark-surface p-5 lg:p-7 rounded-[32px] border border-gray-100 dark:border-dark-border shadow-sm sm:col-span-2 lg:col-span-1">
+             <p className="text-gray-400 dark:text-dark-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">{t.vehicleNetProfit}</p>
+             <p className={`text-2xl lg:text-3xl font-black ${vehicleNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 ৳{vehicleNet.toLocaleString()}
              </p>
           </div>
@@ -96,16 +96,16 @@ export default function Dashboard({ lang }: { lang: Language }) {
 
       {/* --- Water Business Section --- */}
       <section className="space-y-4 lg:space-y-6">
-        <div className="flex items-center gap-3">
-           <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg text-cyan-600 dark:text-cyan-400"><Droplets size={18} /></div>
-           <h2 className="text-lg lg:text-xl font-bold dark:text-white">{t.waterBusiness}</h2>
+        <div className="flex items-center gap-3 px-2 sm:px-0">
+           <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl text-cyan-600 dark:text-cyan-400"><Droplets size={18} /></div>
+           <h2 className="text-base sm:text-lg lg:text-xl font-bold dark:text-white uppercase tracking-wider">{t.waterBusiness}</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           <StatCard label={t.totalWaterSales} value={stats.totalDealerSales} icon={<TrendingUp className="text-blue-500" />} color="bg-blue-50 dark:bg-blue-900/20" />
           <StatCard label={t.otherExpenses} value={stats.totalExpenses} icon={<TrendingDown className="text-orange-500" />} color="bg-orange-50 dark:bg-orange-900/20" />
-          <div className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm">
-             <p className="text-gray-400 dark:text-dark-muted text-xs font-medium mb-1">{t.waterNetProfit}</p>
-             <p className={`text-xl lg:text-2xl font-black ${waterNet >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'}`}>
+          <div className="bg-white dark:bg-dark-surface p-5 lg:p-7 rounded-[32px] border border-gray-100 dark:border-dark-border shadow-sm sm:col-span-2 lg:col-span-1">
+             <p className="text-gray-400 dark:text-dark-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">{t.waterNetProfit}</p>
+             <p className={`text-2xl lg:text-3xl font-black ${waterNet >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 ৳{waterNet.toLocaleString()}
              </p>
           </div>
@@ -135,15 +135,15 @@ function StatCard({ label, value, icon, color, isCurrency = true }: { label: str
   return (
     <motion.div 
       whileHover={{ y: -3 }}
-      className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-2xl lg:rounded-3xl border border-gray-100 dark:border-dark-border flex items-start justify-between shadow-sm"
+      className="bg-white dark:bg-dark-surface p-5 lg:p-7 rounded-[32px] border border-gray-100 dark:border-dark-border flex items-start justify-between shadow-sm transition-all"
     >
       <div>
-        <p className="text-gray-400 dark:text-dark-muted text-xs font-medium mb-1">{label}</p>
-        <p className="text-xl lg:text-2xl font-bold text-ink dark:text-white">
+        <p className="text-gray-400 dark:text-dark-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">{label}</p>
+        <p className="text-2xl lg:text-3xl font-black text-ink dark:text-white tracking-tight">
           {isCurrency ? '৳' : ''}{value.toLocaleString()}
         </p>
       </div>
-      <div className={`p-2 lg:p-3 rounded-lg lg:rounded-2xl ${color}`}>
+      <div className={`p-2.5 lg:p-4 rounded-2xl ${color} shadow-sm shrink-0`}>
         {icon}
       </div>
     </motion.div>
