@@ -42,13 +42,21 @@ import ConfirmModal from './components/ui/ConfirmModal';
 
 export default function App() {
   const [user, setUser] = useState<{ uid: string } | null>(() => {
-    return localStorage.getItem('milad_admin_session') === 'active' ? { uid: 'admin' } : null;
+    try {
+      return localStorage.getItem('milad_admin_session') === 'active' ? { uid: 'admin' } : null;
+    } catch {
+      return null;
+    }
   });
   const [loading, setLoading] = useState(false);
   const [lang, setLang] = useState<Language>('bn');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'vehicles' | 'dealers' | 'expenses' | 'drivers' | 'cng' | 'reports'>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    return localStorage.getItem('milad_water_theme') === 'dark';
+    try {
+      return localStorage.getItem('milad_water_theme') === 'dark';
+    } catch {
+      return false;
+    }
   });
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
@@ -61,12 +69,16 @@ export default function App() {
   const ADMIN_PASSWORD = "Milad2006";
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('milad_water_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('milad_water_theme', 'light');
+    try {
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('milad_water_theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('milad_water_theme', 'light');
+      }
+    } catch (e) {
+      console.warn('Failed to save theme to localStorage', e);
     }
   }, [isDarkMode]);
 
@@ -76,7 +88,11 @@ export default function App() {
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
   const handleLogout = async () => {
-    localStorage.removeItem('milad_admin_session');
+    try {
+      localStorage.removeItem('milad_admin_session');
+    } catch (e) {
+      console.warn('Failed to clear session from localStorage', e);
+    }
     setUser(null);
   };
 
@@ -102,7 +118,11 @@ export default function App() {
     // Simulate login delay
     setTimeout(() => {
       if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        localStorage.setItem('milad_admin_session', 'active');
+        try {
+          localStorage.setItem('milad_admin_session', 'active');
+        } catch (e) {
+          console.warn('Failed to save session to localStorage', e);
+        }
         setUser({ uid: 'admin' });
       } else {
         setLoginError('Invalid Username or Password');
