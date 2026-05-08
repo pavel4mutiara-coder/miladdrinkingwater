@@ -150,7 +150,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
           <h2 className="text-xl font-bold text-ink dark:text-white">{t.vehicleList}</h2>
           <button 
             onClick={() => setIsAddingVehicle(true)}
-            className="p-2 bg-ink dark:bg-blue-600 text-white rounded-xl"
+            className="p-2 bg-ink dark:bg-blue-600 text-white rounded-xl shadow-lg transition-all"
           >
             <Plus size={20} />
           </button>
@@ -167,7 +167,26 @@ export default function VehicleManager({ lang }: { lang: Language }) {
           />
         </div>
 
-        <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-250px)] lg:max-h-[calc(100vh-200px)] pb-4">
+        {/* Mobile Horizontal Selector when a vehicle is selected */}
+        {selectedVehicle && (
+          <div className="lg:hidden flex overflow-x-auto gap-2 pb-2 custom-scrollbar">
+            {filteredVehicles.map(v => (
+              <button
+                key={v.id}
+                onClick={() => setSelectedVehicle(v)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                  selectedVehicle.id === v.id
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white dark:bg-dark-surface text-gray-500 dark:text-dark-muted border-gray-100 dark:border-dark-border'
+                }`}
+              >
+                {v.vehicleNumber}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className={`space-y-3 overflow-y-auto max-h-[calc(100vh-250px)] lg:max-h-[calc(100vh-200px)] pb-4 ${selectedVehicle ? 'hidden lg:block' : 'block'}`}>
           {filteredVehicles.map(v => (
             <motion.div
               layout

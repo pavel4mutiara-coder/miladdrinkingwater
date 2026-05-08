@@ -188,7 +188,26 @@ export default function CNGManager({ lang }: CNGManagerProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+        {/* Mobile Horizontal Selector when a CNG is selected */}
+        {selectedCng && (
+          <div className="lg:hidden flex overflow-x-auto gap-2 pb-2 custom-scrollbar">
+            {cngs.map(c => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedCng(c)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all border whitespace-nowrap ${
+                  selectedCng.id === c.id
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white dark:bg-dark-surface text-gray-500 dark:text-dark-muted border-gray-100 dark:border-dark-border'
+                }`}
+              >
+                {c.cngNumber}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className={`flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar ${selectedCng ? 'hidden lg:block' : 'block'}`}>
           {cngs.map(cng => (
             <div
               key={cng.id}

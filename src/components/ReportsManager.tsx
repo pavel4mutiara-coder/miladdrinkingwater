@@ -39,7 +39,12 @@ export default function ReportsManager({ lang }: { lang: Language }) {
     ];
 
     const unsubscribes = collections.map(col => {
-      const q = query(collection(db, col.name), where('date', '>=', `${selectedMonth}-01`), where('date', '<=', `${selectedMonth}-31`));
+      // Use inclusive ranges for the month; querying strings like '2023-01-01' to '2023-01-99' covers all days
+      const q = query(
+        collection(db, col.name), 
+        where('date', '>=', `${selectedMonth}-01`), 
+        where('date', '<=', `${selectedMonth}-31`)
+      );
       return onSnapshot(q, (snap) => {
         let sum = 0;
         snap.forEach(d => {

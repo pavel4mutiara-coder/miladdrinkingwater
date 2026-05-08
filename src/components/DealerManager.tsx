@@ -119,42 +119,63 @@ export default function DealerManager({ lang }: { lang: Language }) {
     <div className="flex flex-col lg:flex-row gap-8 h-full">
       {/* Dealer List */}
       <div className={`w-full lg:w-80 flex flex-col gap-4 ${selectedDealer ? 'hidden lg:flex' : 'flex'}`}>
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold flex items-center gap-2 dark:text-white">
-            <Users size={24} className="text-cyan-600 dark:text-cyan-400" />
-            {t.dealerList}
-          </h2>
-          <button 
-            onClick={() => setIsAddingDealer(true)}
-            className="p-2 bg-ink dark:bg-blue-600 text-white rounded-xl hover:bg-black transition-colors"
-          >
-            <Plus size={20} />
-          </button>
-        </div>
-
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted" size={18} />
-          <input 
-            type="text" 
-            placeholder={t.searchDealer} 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-sm dark:text-white"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 overflow-y-auto max-h-[calc(100vh-250px)] lg:max-h-[calc(100vh-200px)] pb-4">
-          {filteredDealers.map(d => (
-            <motion.div
-              layout
-              key={d.id}
-              onClick={() => setSelectedDealer(d)}
-              className={`p-4 rounded-2xl cursor-pointer border transition-all h-fit ${
-                selectedDealer?.id === d.id 
-                  ? 'bg-cyan-600 dark:bg-blue-600 text-white border-cyan-600 dark:border-blue-500 shadow-lg shadow-cyan-600/10' 
-                  : 'bg-white dark:bg-dark-surface border-gray-100 dark:border-dark-border hover:border-cyan-200 dark:hover:border-blue-400'
-              }`}
+        {/* Dealer List & Responsive Switching Bar */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold flex items-center gap-2 dark:text-white">
+              <Users size={24} className="text-cyan-600 dark:text-cyan-400" />
+              {t.dealerList}
+            </h2>
+            <button 
+              onClick={() => setIsAddingDealer(true)}
+              className="p-2 bg-ink dark:bg-blue-600 text-white rounded-xl hover:bg-black transition-colors"
             >
+              <Plus size={20} />
+            </button>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-muted" size={18} />
+            <input 
+              type="text" 
+              placeholder={t.searchDealer} 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all text-sm dark:text-white"
+            />
+          </div>
+
+          {/* Mobile Horizontal Selector when a dealer is selected */}
+          {selectedDealer && (
+            <div className="lg:hidden flex overflow-x-auto gap-2 pb-2 custom-scrollbar">
+              {filteredDealers.map(d => (
+                <button
+                  key={d.id}
+                  onClick={() => setSelectedDealer(d)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all border ${
+                    selectedDealer.id === d.id
+                      ? 'bg-cyan-600 text-white border-cyan-600'
+                      : 'bg-white dark:bg-dark-surface text-gray-500 dark:text-dark-muted border-gray-100 dark:border-dark-border'
+                  }`}
+                >
+                  {d.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3 overflow-y-auto max-h-[400px] lg:max-h-[calc(100vh-200px)] pb-4 ${selectedDealer ? 'hidden lg:grid' : 'grid'}`}>
+            {filteredDealers.map(d => (
+              <motion.div
+                layout
+                key={d.id}
+                onClick={() => setSelectedDealer(d)}
+                className={`p-4 rounded-2xl cursor-pointer border transition-all h-fit ${
+                  selectedDealer?.id === d.id 
+                    ? 'bg-cyan-600 dark:bg-blue-600 text-white border-cyan-600 dark:border-blue-500 shadow-lg shadow-cyan-600/10' 
+                    : 'bg-white dark:bg-dark-surface border-gray-100 dark:border-dark-border hover:border-cyan-200 dark:hover:border-blue-400'
+                }`}
+              >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="font-bold dark:text-white truncate">{d.name}</p>
@@ -181,6 +202,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
             </motion.div>
           ))}
           {dealers.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted py-10 italic col-span-full">{lang === 'bn' ? 'কোন ডিলার যোগ করা হয়নি' : 'No dealers added'}</p>}
+          </div>
         </div>
       </div>
 
