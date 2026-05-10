@@ -124,6 +124,14 @@ export const translations = {
     emergencyContact: "জরুরী যোগাযোগ",
     cngManagement: "সিএনজি অটোরিকশা ব্যবস্থাপনা",
     driverPhoto: "ড্রাইভারের ছবি",
+    fullHistory: "পূর্ণাঙ্গ লেনদেনের ইতিহাস",
+    transactionType: "লেনদেনের ধরণ",
+    allTime: "সর্বকালের রেকর্ড",
+    startDate: "শুরুর তারিখ",
+    endDate: "শেষ তারিখ",
+    filter: "ফিল্টার",
+    noResults: "কোন ফলাফল পাওয়া যায়নি",
+    all: "সবগুলো",
   },
   en: {
     appName: "Milad Drinking Water",
@@ -250,6 +258,14 @@ export const translations = {
     emergencyContact: "Emergency Contact",
     cngManagement: "CNG Rickshaw Management",
     driverPhoto: "Driver Photo",
+    fullHistory: "Full Transaction History",
+    transactionType: "Type",
+    allTime: "All Time",
+    startDate: "Start Date",
+    endDate: "End Date",
+    filter: "Filter",
+    noResults: "No results found",
+    all: "All",
   }
 };
 

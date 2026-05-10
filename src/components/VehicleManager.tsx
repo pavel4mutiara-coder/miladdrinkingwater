@@ -18,7 +18,9 @@ import {
   Calendar,
   BarChart2,
   Printer,
-  FileText
+  FileText,
+  ArrowUpRight,
+  ArrowDownLeft
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -397,6 +399,8 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   ]}
                />
             </div>
+
+            <VehicleUnifiedHistory vehicleId={selectedVehicle.id} lang={lang} />
           </div>
         )}
       </div>
@@ -834,6 +838,160 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
         confirmText={t.delete}
         cancelText={t.close}
       />
+    </div>
+  );
+}
+
+function VehicleUnifiedHistory({ vehicleId, lang }: { vehicleId: string, lang: Language }) {
+  const t = translations[lang];
+  const [history, setHistory] = useState<any[]>([]);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    setLoading(true);
+    // Subscribe to both collections
+    const qIncome = query(collection(db, 'vehicle_income'), where('vehicleId', '==', vehicleId));
+    const qMaint = query(collection(db, 'maintenance'), where('vehicleId', '==', vehicleId));
+
+    let incomeData: any[] = [];
+    let maintData: any[] = [];
+
+    const handleSync = () => {
+      const combined = [
+        ...incomeData.map(d => ({ ...d, type: 'income', displayType: (lang === 'bn' ? ' আয়' : 'Income'), icon: <ArrowUpRight className="text-emerald-500" size={16} /> })),
+        ...maintData.map(d => ({ ...d, type: 'maintenance', displayType: (lang === 'bn' ? ' ব্যয়' : 'Cost'), icon: <ArrowDownLeft className="text-rose-500" size={16} /> }))
+      ];
+
+      // Sort by date
+      combined.sort((a, b) => {
+        const dateA = a.date || '';
+        const dateB = b.date || '';
+        return sortOrder === 'desc' ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+      });
+
+      setHistory(combined);
+      setLoading(false);
+    };
+
+    const unsubIncome = onSnapshot(qIncome, (snap) => {
+      incomeData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      handleSync();
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'vehicle_income'));
+
+    const unsubMaint = onSnapshot(qMaint, (snap) => {
+      maintData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      handleSync();
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'maintenance'));
+
+    return () => {
+      unsubIncome();
+      unsubMaint();
+    };
+  }, [vehicleId, sortOrder, lang]);
+
+  const filteredHistory = history.filter(item => 
+    (item.description || item.routeDetails || '').toLowerCase().includes(search.toLowerCase()) ||
+    (item.driverName || item.mechanicName || '').toLowerCase().includes(search.toLowerCase()) ||
+    (item.date || '').includes(search)
+  );
+
+  return (
+    <div className="bg-white dark:bg-dark-surface rounded-[32px] border border-gray-100 dark:border-dark-border overflow-hidden shadow-sm">
+      <div className="p-6 border-b border-gray-50 dark:border-dark-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-black text-ink dark:text-white uppercase tracking-tight flex items-center gap-3">
+             <History className="text-blue-500" size={24} />
+             {t.fullHistory}
+          </h3>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{t.allTime}</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 md:flex-none">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            <input 
+              type="text" 
+              placeholder={t.search}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-4 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl text-xs focus:ring-2 focus:ring-blue-500/20 w-full md:w-64 dark:text-white"
+            />
+          </div>
+          <button 
+            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-dark-bg text-gray-600 dark:text-dark-muted rounded-xl text-xs font-bold border border-gray-100 dark:border-dark-border hover:bg-gray-100 dark:hover:bg-dark-border transition-all"
+          >
+            <Calendar size={14} />
+            {sortOrder === 'desc' ? (lang === 'bn' ? 'নতুন আগে' : 'Newest First') : (lang === 'bn' ? 'পুরানো আগে' : 'Oldest First')}
+          </button>
+        </div>
+      </div>
+
+      <div className="h-[400px] overflow-y-auto overflow-x-auto custom-scrollbar">
+        {loading ? (
+          <div className="h-full flex items-center justify-center p-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : filteredHistory.length > 0 ? (
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50/50 dark:bg-dark-bg/50 border-b border-gray-100 dark:border-dark-border sticky top-0 z-10 backdrop-blur-sm">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.date}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.transactionType}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.description}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest">{lang === 'bn' ? 'সংশ্লিষ্ট ব্যক্তি' : 'Personnel'}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.amount}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
+              {filteredHistory.map((item) => (
+                <tr key={`${item.type}-${item.id}`} className="hover:bg-gray-50/50 dark:hover:bg-blue-900/5 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-xs font-bold text-gray-600 dark:text-dark-muted">{item.date}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                       {item.icon}
+                       <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${
+                         item.type === 'income' 
+                           ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' 
+                           : 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400'
+                       }`}>
+                         {item.displayType}
+                       </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-xs font-bold text-ink dark:text-white line-clamp-1">
+                      {item.description || item.routeDetails || 'No details'}
+                      {item.partsReplaced && <span className="block text-[10px] text-gray-400 mt-1 font-medium italic">Parts: {item.partsReplaced}</span>}
+                    </p>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-xs font-bold text-gray-500 dark:text-dark-muted">
+                      {item.mechanicName || item.driverName || 'N/A'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right whitespace-nowrap">
+                    <span className={`text-sm font-black font-mono ${
+                      item.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                    }`}>
+                      {item.type === 'income' ? '+' : '-'} ৳{(item.amount || item.cost || 0).toLocaleString()}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center p-10 text-center">
+            <FileText className="w-12 h-12 text-gray-100 dark:text-dark-surface mb-4" />
+            <p className="text-gray-400 dark:text-dark-muted italic text-sm">{search ? (lang === 'bn' ? 'কোন ফলাফল পাওয়া যায়নি' : 'No matching history found') : (lang === 'bn' ? 'কোন লেনদেনের রেকর্ড নেই' : 'No transaction records found')}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

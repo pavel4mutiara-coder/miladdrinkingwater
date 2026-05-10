@@ -13,6 +13,7 @@ import {
   AlertCircle,
   History,
   Fuel,
+  Filter,
   Settings as SettingsIcon,
   User as UserIcon,
   Smartphone,
@@ -49,6 +50,11 @@ export default function CNGManager({ lang }: CNGManagerProps) {
 
   const [incomeForm, setIncomeForm] = useState({ amount: 0, date: new Date().toISOString().split('T')[0] });
   const [expenseForm, setExpenseForm] = useState({ amount: 0, date: new Date().toISOString().split('T')[0], type: 'Gas', description: '' });
+
+  // Filter states
+  const [filterType, setFilterType] = useState<string>('All');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   useEffect(() => {
     const qCng = query(collection(db, 'cng_rickshaws'), orderBy('createdAt', 'desc'));
@@ -178,6 +184,13 @@ export default function CNGManager({ lang }: CNGManagerProps) {
       handleFirestoreError(err, OperationType.DELETE, 'cng_expenses');
     }
   };
+
+  const filteredExpenses = expenses.filter(exp => {
+    const matchesType = filterType === 'All' || exp.type === filterType;
+    const matchesStartDate = !startDate || exp.date >= startDate;
+    const matchesEndDate = !endDate || exp.date <= endDate;
+    return matchesType && matchesStartDate && matchesEndDate;
+  });
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-full min-h-[600px]">
@@ -470,6 +483,48 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                   </div>
 
                   <div className="bg-white dark:bg-dark-surface p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-50 dark:border-dark-border">
+                    <div className="mb-6 p-4 bg-gray-50 dark:bg-dark-bg rounded-2xl space-y-4">
+                      <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest mb-1">
+                        <Filter size={12} /> {t.filter}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider ml-1">{t.category}</label>
+                          <select 
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className="w-full bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl py-1.5 px-3 outline-none text-xs dark:text-white"
+                          >
+                            <option value="All">{t.all}</option>
+                            <option value="Gas">Gas</option>
+                            <option value="Repair">Repair</option>
+                            <option value="Tire">Tire</option>
+                            <option value="Battery">Battery</option>
+                            <option value="Engine">Engine</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider ml-1">{t.startDate}</label>
+                          <input 
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl py-1.5 px-3 outline-none text-xs dark:text-white"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-wider ml-1">{t.endDate}</label>
+                          <input 
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl py-1.5 px-3 outline-none text-xs dark:text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <form onSubmit={handleAddExpense} className="grid grid-cols-2 gap-2 sm:gap-3 mb-5">
                        <input 
                          type="date"
@@ -502,7 +557,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                     </form>
 
                     <div className="space-y-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
-                       {expenses.map(exp => (
+                       {filteredExpenses.length > 0 ? filteredExpenses.map(exp => (
                         <div key={exp.id} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-dark-bg rounded-xl sm:rounded-2xl group transition-all">
                           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white dark:bg-dark-surface rounded-lg sm:rounded-xl flex items-center justify-center text-gray-400 shrink-0">
@@ -524,7 +579,11 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                             </button>
                           </div>
                         </div>
-                      ))}
+                      )) : (
+                        <div className="py-10 text-center">
+                          <p className="text-xs font-bold text-gray-400 dark:text-dark-muted italic">{t.noResults}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
