@@ -132,6 +132,7 @@ export const translations = {
     filter: "ফিল্টার",
     noResults: "কোন ফলাফল পাওয়া যায়নি",
     all: "সবগুলো",
+    maintenanceTrend: "মেরামত ব্যয়ের ট্রেন্ড",
   },
   en: {
     appName: "Milad Drinking Water",
@@ -266,6 +267,7 @@ export const translations = {
     filter: "Filter",
     noResults: "No results found",
     all: "All",
+    maintenanceTrend: "Maintenance Cost Trend",
   }
 };
 

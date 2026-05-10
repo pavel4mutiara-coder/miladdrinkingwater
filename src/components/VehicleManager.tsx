@@ -30,7 +30,9 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer
+  ResponsiveContainer,
+  LineChart,
+  Line
 } from 'recharts';
 import { Vehicle, Maintenance, VehicleIncome } from '../types';
 import { translations, Language } from '../locales';
@@ -616,16 +618,76 @@ function VehicleSummary({ vehicleId, lang }: { vehicleId: string, lang: Language
       </div>
 
       {sortedMonths.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-3xl border border-gray-100 dark:border-dark-border">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm">
+               <h3 className="text-sm font-bold text-ink dark:text-white uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <BarChart2 className="text-blue-500 dark:text-blue-400" size={16} />
+                  {t.profitAnalysis}
+               </h3>
+               <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                      <XAxis 
+                        dataKey="name" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: '#94a3b8', fontSize: 10 }}
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: '#94a3b8', fontSize: 10 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                        cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                        labelStyle={{ color: '#f8fafc' }}
+                      />
+                      <Legend 
+                        iconType="circle" 
+                        wrapperStyle={{ paddingTop: '20px', fontSize: '10px', textTransform: 'uppercase', fontWeights: 'bold', color: '#94a3b8' }} 
+                      />
+                      <Bar name={lang === 'bn' ? "ইনকাম" : "Income"} dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
+                      <Bar name={lang === 'bn' ? "ব্যয়" : "Cost"} dataKey="maintenance" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
+                    </BarChart>
+                  </ResponsiveContainer>
+               </div>
+            </div>
+
+            <div className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-3xl border border-gray-100 dark:border-dark-border h-fit lg:max-h-[350px] overflow-hidden flex flex-col shadow-sm">
+               <h3 className="text-sm font-bold text-ink dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Calendar className="text-blue-500 dark:text-blue-400" size={16} />
+                  {t.monthlyBreakdown}
+               </h3>
+               <div className="space-y-3 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+                  {sortedMonths.map(month => (
+                    <div key={month} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-dark-border last:border-0 grow">
+                       <span className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted">{month}</span>
+                       <div className="flex gap-2 lg:gap-4">
+                          <div className="text-right">
+                             <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">৳{(monthlyStats[month].income || 0).toLocaleString()}</p>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-xs font-bold text-rose-600 dark:text-rose-400">৳{(monthlyStats[month].maintenance || 0).toLocaleString()}</p>
+                          </div>
+                       </div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-3xl border border-gray-100 dark:border-dark-border shadow-sm">
              <h3 className="text-sm font-bold text-ink dark:text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-                <BarChart2 className="text-blue-500 dark:text-blue-400" size={16} />
-                {t.profitAnalysis}
+                <Wrench className="text-rose-500" size={16} />
+                {t.maintenanceTrend}
              </h3>
              <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                  <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.1} />
                     <XAxis 
                       dataKey="name" 
                       axisLine={false} 
@@ -639,39 +701,21 @@ function VehicleSummary({ vehicleId, lang }: { vehicleId: string, lang: Language
                     />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#1e293b', borderRadius: '16px', border: '1px solid #334155', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
                       labelStyle={{ color: '#f8fafc' }}
+                      itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                     />
-                    <Legend 
-                      iconType="circle" 
-                      wrapperStyle={{ paddingTop: '20px', fontSize: '10px', textTransform: 'uppercase', fontWeights: 'bold', color: '#94a3b8' }} 
+                    <Line 
+                      type="monotone" 
+                      dataKey="maintenance" 
+                      name={lang === 'bn' ? "মেরামত ব্যয়" : "Maintenance Cost"} 
+                      stroke="#f43f5e" 
+                      strokeWidth={3} 
+                      dot={{ fill: '#f43f5e', r: 4, strokeWidth: 2, stroke: '#fff' }} 
+                      activeDot={{ r: 6, strokeWidth: 0 }} 
+                      animationDuration={1500}
                     />
-                    <Bar name={lang === 'bn' ? "ইনকাম" : "Income"} dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
-                    <Bar name={lang === 'bn' ? "ব্যয়" : "Cost"} dataKey="maintenance" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
-                  </BarChart>
+                  </LineChart>
                 </ResponsiveContainer>
-             </div>
-          </div>
-
-          <div className="bg-white dark:bg-dark-surface p-4 lg:p-6 rounded-3xl border border-gray-100 dark:border-dark-border h-fit lg:max-h-[350px] overflow-hidden flex flex-col">
-             <h3 className="text-sm font-bold text-ink dark:text-white uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Calendar className="text-blue-500 dark:text-blue-400" size={16} />
-                {t.monthlyBreakdown}
-             </h3>
-             <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                {sortedMonths.map(month => (
-                  <div key={month} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-dark-border last:border-0 grow">
-                     <span className="text-[10px] lg:text-xs font-bold text-gray-500 dark:text-dark-muted">{month}</span>
-                     <div className="flex gap-2 lg:gap-4">
-                        <div className="text-right">
-                           <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">৳{(monthlyStats[month].income || 0).toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-xs font-bold text-rose-600 dark:text-rose-400">৳{(monthlyStats[month].maintenance || 0).toLocaleString()}</p>
-                        </div>
-                     </div>
-                  </div>
-                ))}
              </div>
           </div>
         </div>
