@@ -48,8 +48,13 @@ export default function CNGManager({ lang }: CNGManagerProps) {
     dueAmount: 0
   });
 
-  const [incomeForm, setIncomeForm] = useState({ amount: 0, date: new Date().toISOString().split('T')[0] });
-  const [expenseForm, setExpenseForm] = useState({ amount: 0, date: new Date().toISOString().split('T')[0], type: 'Gas', description: '' });
+  const getTodayString = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const [incomeForm, setIncomeForm] = useState({ amount: 0, date: getTodayString() });
+  const [expenseForm, setExpenseForm] = useState({ amount: 0, date: getTodayString(), type: 'Gas', description: '' });
 
   // Filter states
   const [filterType, setFilterType] = useState<string>('All');
@@ -131,7 +136,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
         ...incomeForm,
         createdAt: Timestamp.now()
       });
-      setIncomeForm({ amount: 0, date: new Date().toISOString().split('T')[0] });
+      setIncomeForm({ amount: 0, date: getTodayString() });
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'cng_income');
     } finally {
@@ -149,7 +154,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
         ...expenseForm,
         createdAt: Timestamp.now()
       });
-      setExpenseForm({ amount: 0, date: new Date().toISOString().split('T')[0], type: 'Gas', description: '' });
+      setExpenseForm({ amount: 0, date: getTodayString(), type: 'Gas', description: '' });
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'cng_expenses');
     } finally {
@@ -278,107 +283,168 @@ export default function CNGManager({ lang }: CNGManagerProps) {
               {/* Printable CNG Report (Hidden in UI, Visible in Print) */}
               <div className="hidden print:block fixed inset-0 z-[9999] bg-white w-full h-full p-0 m-0">
                 <div className="printable-document px-12 py-16">
-                  <div className="flex justify-between items-start border-b-2 border-gray-100 pb-8 mb-10">
+                  {/* Header */}
+                  <div className="flex justify-between items-start border-b-2 border-ink pb-8 mb-10">
                     <div>
-                      <h2 className="text-2xl font-black uppercase text-blue-600">{t.miladWater}</h2>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.anikaTransport}</p>
-                      <p className="text-xs mt-2 text-gray-500">{t.address}</p>
+                      <h2 className="text-4xl font-black uppercase text-blue-600 mb-1">{t.miladWater}</h2>
+                      <p className="text-[12px] font-bold text-gray-500 uppercase tracking-[0.3em]">{t.anikaTransport}</p>
+                      <p className="text-sm mt-4 text-gray-600 font-medium leading-relaxed">
+                        {t.address}<br />
+                        Phone: +880 1XXX-XXXXXX
+                      </p>
                     </div>
                     <div className="text-right">
-                      <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">{lang === 'bn' ? 'সিএনজি রিপোর্ট' : 'CNG Rickshaw Report'}</h1>
-                      <div className="bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 inline-block">
-                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest">
-                          {lang === 'bn' ? 'তারিখ' : 'Date'}: {new Date().toLocaleDateString()}
-                        </p>
+                      <h1 className="text-4xl font-black uppercase tracking-tighter mb-4 text-ink">{lang === 'bn' ? 'ফরমাল সিএনজি স্টেটমেন্ট' : 'Formal CNG Statement'}</h1>
+                      <div className="bg-gray-50 px-6 py-4 rounded-[32px] border border-gray-200 inline-block shadow-sm">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{lang === 'bn' ? 'হিসাব মাস' : 'Statement Period'}</p>
+                        <p className="text-lg font-black text-ink">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mb-10 grid grid-cols-2 gap-8">
-                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t.cngNumber}</p>
-                      <h3 className="text-2xl font-black text-ink">{selectedCng.cngNumber}</h3>
-                      <p className="text-xs font-bold text-gray-500 mt-2">{lang === 'bn' ? 'ড্রাইভার' : 'Driver'}: {drivers.find(d => d.id === selectedCng.driverId)?.name}</p>
-                    </div>
-                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 grid grid-cols-2 gap-4">
-                      <div className="text-right">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{t.dailyPayment}</p>
-                        <p className="text-xl font-black text-ink">৳{selectedCng.dailyPayment.toLocaleString()}</p>
+                  {/* Info Cards */}
+                  <div className="mb-12 grid grid-cols-2 gap-10">
+                    <div className="bg-gray-50/50 p-10 rounded-[48px] border border-gray-100 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-6 opacity-[0.05]">
+                         <UserIcon size={100} />
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1">{t.dueAmount}</p>
-                        <p className="text-xl font-black text-red-600">৳{selectedCng.dueAmount.toLocaleString()}</p>
+                      <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-3">{t.cngNumber}</p>
+                      <h3 className="text-4xl font-black text-ink mb-6">{selectedCng.cngNumber}</h3>
+                      <div className="space-y-3 border-t border-gray-200 pt-6">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-gray-500 uppercase">{lang === 'bn' ? 'চালক' : 'Driver'}</span>
+                          <span className="text-base font-black text-ink">{drivers.find(d => d.id === selectedCng.driverId)?.name}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-gray-500 uppercase">{lang === 'bn' ? 'ফোন' : 'Contact'}</span>
+                          <span className="text-base font-black font-mono text-blue-600">{drivers.find(d => d.id === selectedCng.driverId)?.phone || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-ink p-10 rounded-[48px] shadow-2xl text-white flex flex-col justify-between relative overflow-hidden">
+                      <div className="absolute bottom-0 left-0 p-6 opacity-[0.1]">
+                         <DollarSign size={120} />
+                      </div>
+                      <div className="flex justify-between items-start relative z-10">
+                         <div>
+                            <p className="text-[11px] font-bold text-blue-300 uppercase tracking-widest mb-2">{t.dailyPayment}</p>
+                            <p className="text-4xl font-black">৳{selectedCng.dailyPayment.toLocaleString()}</p>
+                         </div>
+                         <div className="text-right">
+                            <p className="text-[11px] font-bold text-rose-300 uppercase tracking-widest mb-2">{t.dueAmount}</p>
+                            <p className="text-3xl font-black text-rose-400">৳{selectedCng.dueAmount.toLocaleString()}</p>
+                         </div>
+                      </div>
+                      <div className="mt-8 pt-8 border-t border-white/10 flex justify-between items-end relative z-10">
+                         <div>
+                            <p className="text-[11px] font-bold text-blue-300 uppercase tracking-widest mb-1">{lang === 'bn' ? 'মাসিক নিট আয়' : 'Monthly Net Income'}</p>
+                            <p className="text-3xl font-black text-emerald-400">
+                               ৳{(incomes.filter(inc => inc.date.startsWith(getTodayString().slice(0, 7))).reduce((sum, inc) => sum + inc.amount, 0) - 
+                                  expenses.filter(exp => exp.date.startsWith(getTodayString().slice(0, 7))).reduce((sum, exp) => sum + exp.amount, 0)).toLocaleString()}
+                            </p>
+                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-12">
+                  {/* Tables */}
+                  <div className="space-y-16">
                     {/* Income Table */}
                     <div>
-                      <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <DollarSign size={16} className="text-emerald-500" />
-                        {t.cngIncome}
+                      <h3 className="text-sm font-black uppercase tracking-[0.25em] mb-6 flex items-center gap-3 text-ink">
+                        <div className="w-2 h-8 bg-emerald-500 rounded-full" />
+                        {t.cngIncome} - {new Date().toLocaleString('default', { month: 'long' })}
                       </h3>
-                      <table className="w-full text-left border-collapse border border-gray-100 rounded-2xl overflow-hidden">
+                      <table className="w-full text-left border-separate border-spacing-0 border-2 border-gray-100 rounded-[32px] overflow-hidden">
                         <thead>
-                          <tr className="bg-gray-50 border-b border-gray-100">
-                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.date}</th>
-                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.description}</th>
-                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t.amount}</th>
+                          <tr className="bg-gray-50/80">
+                            <th className="px-10 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-100">{t.date}</th>
+                            <th className="px-10 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-100">{t.description}</th>
+                            <th className="px-10 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-100 text-right">{t.amount}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                          {incomes.map(inc => (
-                            <tr key={inc.id} className="text-xs font-bold">
-                              <td className="px-6 py-3 text-gray-500">{inc.date}</td>
-                              <td className="px-6 py-3">Daily Rent Received</td>
-                              <td className="px-6 py-3 text-right text-emerald-600 font-black">৳{inc.amount.toLocaleString()}</td>
-                            </tr>
-                          ))}
+                          {incomes.filter(inc => inc.date.startsWith(getTodayString().slice(0, 7))).length > 0 ? (
+                            incomes.filter(inc => inc.date.startsWith(getTodayString().slice(0, 7))).map(inc => (
+                              <tr key={inc.id} className="text-sm font-bold bg-white">
+                                <td className="px-10 py-5 text-gray-500 font-mono">{inc.date}</td>
+                                <td className="px-10 py-5 text-ink">Daily Rent Payment</td>
+                                <td className="px-10 py-5 text-right text-emerald-600 font-black">৳{inc.amount.toLocaleString()}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr><td colSpan={3} className="px-10 py-12 text-center text-gray-400 italic text-sm">No income records documented for this period.</td></tr>
+                          )}
                         </tbody>
+                        <tfoot className="bg-emerald-50/50">
+                          <tr>
+                            <td colSpan={2} className="px-10 py-6 text-right text-[11px] font-black text-emerald-800 uppercase tracking-widest">Total Income</td>
+                            <td className="px-10 py-6 text-right text-emerald-800 text-lg font-black">
+                              ৳{incomes.filter(inc => inc.date.startsWith(getTodayString().slice(0, 7))).reduce((sum, inc) => sum + inc.amount, 0).toLocaleString()}
+                            </td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
 
                     {/* Expense Table */}
                     <div>
-                      <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <TrendingUp size={16} className="text-rose-500" />
-                        {t.cngExpense}
+                      <h3 className="text-sm font-black uppercase tracking-[0.25em] mb-6 flex items-center gap-3 text-ink">
+                        <div className="w-2 h-8 bg-rose-500 rounded-full" />
+                        {t.cngExpense} - {new Date().toLocaleString('default', { month: 'long' })}
                       </h3>
-                      <table className="w-full text-left border-collapse border border-gray-100 rounded-2xl overflow-hidden">
+                      <table className="w-full text-left border-separate border-spacing-0 border-2 border-gray-100 rounded-[32px] overflow-hidden">
                         <thead>
-                          <tr className="bg-gray-50 border-b border-gray-100">
-                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.date}</th>
-                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t.category}</th>
-                            <th className="px-6 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t.amount}</th>
+                          <tr className="bg-gray-50/80">
+                            <th className="px-10 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-100">{t.date}</th>
+                            <th className="px-10 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-100">{t.category}</th>
+                            <th className="px-10 py-5 text-[11px] font-black text-gray-500 uppercase tracking-widest border-b border-gray-100 text-right">{t.amount}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                          {expenses.map(exp => (
-                            <tr key={exp.id} className="text-xs font-bold">
-                              <td className="px-6 py-3 text-gray-500">{exp.date}</td>
-                              <td className="px-6 py-3">{exp.type}</td>
-                              <td className="px-6 py-3 text-right text-rose-600 font-black">৳{exp.amount.toLocaleString()}</td>
-                            </tr>
-                          ))}
+                          {expenses.filter(exp => exp.date.startsWith(getTodayString().slice(0, 7))).length > 0 ? (
+                            expenses.filter(exp => exp.date.startsWith(getTodayString().slice(0, 7))).map(exp => (
+                              <tr key={exp.id} className="text-sm font-bold bg-white">
+                                <td className="px-10 py-5 text-gray-500 font-mono">{exp.date}</td>
+                                <td className="px-10 py-5 text-ink">{exp.type}</td>
+                                <td className="px-10 py-5 text-right text-rose-600 font-black">৳{exp.amount.toLocaleString()}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr><td colSpan={3} className="px-10 py-12 text-center text-gray-400 italic text-sm">No expenses documented for this period.</td></tr>
+                          )}
                         </tbody>
+                        <tfoot className="bg-rose-50/50">
+                          <tr>
+                            <td colSpan={2} className="px-10 py-6 text-right text-[11px] font-black text-rose-800 uppercase tracking-widest">Total Expense</td>
+                            <td className="px-10 py-6 text-right text-rose-800 text-lg font-black">
+                              ৳{expenses.filter(exp => exp.date.startsWith(getTodayString().slice(0, 7))).reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}
+                            </td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   </div>
 
-                  <div className="mt-20 pt-10 border-t border-gray-100 grid grid-cols-2 gap-12">
+                  {/* Signatures */}
+                  <div className="mt-24 pt-12 border-t border-gray-200 grid grid-cols-2 gap-20">
                     <div className="text-center">
-                      <div className="mb-4 h-12 flex items-center justify-center">
-                        <div className="w-full max-w-[150px] border-b-2 border-dashed border-gray-200"></div>
+                      <div className="mb-6 h-16 flex items-center justify-center">
+                        <div className="w-full max-w-[220px] border-b-2 border-dashed border-gray-300"></div>
                       </div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Driver Signature</p>
+                      <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest">{lang === 'bn' ? 'চালকের স্বাক্ষর' : 'Driver Signature'}</p>
                     </div>
                     <div className="text-center">
-                      <div className="mb-4 h-12 flex items-center justify-center">
-                        <div className="w-full max-w-[150px] border-b-2 border-dashed border-gray-200"></div>
+                      <div className="mb-6 h-16 flex items-center justify-center">
+                        <div className="w-full max-w-[220px] border-b-2 border-dashed border-gray-300"></div>
                       </div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Authorized Signature</p>
+                      <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest">{lang === 'bn' ? 'কর্তৃপক্ষের স্বাক্ষর' : 'Authorized Authority'}</p>
                     </div>
+                  </div>
+                  
+                  <div className="mt-20 text-center">
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.6em]">{t.miladWater} Management System — Formal Generated Statement</p>
                   </div>
                 </div>
               </div>
@@ -396,8 +462,15 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                   </div>
                   <div className="min-w-0">
                     <h1 className="text-xl sm:text-3xl font-black truncate">{selectedCng.cngNumber}</h1>
-                     <div className="flex items-center gap-2 text-gray-400 dark:text-dark-muted text-[10px] sm:text-sm font-bold truncate">
-                        <UserIcon size={12} className="sm:w-[14px] sm:h-[14px]" /> {drivers.find(d => d.id === selectedCng.driverId)?.name}
+                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-400 dark:text-dark-muted text-[10px] sm:text-sm font-bold truncate mt-1">
+                        <div className="flex items-center gap-1.5">
+                           <UserIcon size={12} className="sm:w-[14px] sm:h-[14px] text-blue-500" /> 
+                           <span>{drivers.find(d => d.id === selectedCng.driverId)?.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                           <Smartphone size={12} className="sm:w-[14px] sm:h-[14px] text-blue-500" />
+                           <span className="font-mono">{drivers.find(d => d.id === selectedCng.driverId)?.phone || 'No Contact'}</span>
+                        </div>
                      </div>
                   </div>
                 </div>
@@ -416,11 +489,99 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                   </div>
                   <button 
                     onClick={() => window.print()}
-                    className="p-3 bg-gray-50 dark:bg-dark-bg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-2xl border border-gray-100 dark:border-dark-border transition-all transition-colors active:scale-95"
+                    className="flex items-center gap-2 px-5 py-3 bg-ink dark:bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-600/20 hover:bg-black dark:hover:bg-blue-700 transition-all active:scale-95 group shrink-0"
                   >
-                    <Printer size={20} />
+                    <Printer size={20} className="group-hover:rotate-12 transition-transform" />
+                    <span className="text-sm font-bold uppercase tracking-widest">{t.printReport}</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Summary and Driver Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Driver Prominent Info */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white dark:bg-dark-surface p-6 rounded-[32px] border border-gray-100 dark:border-dark-border shadow-xl shadow-gray-200/20 dark:shadow-none flex items-center gap-6"
+                >
+                   <div className="w-20 h-20 rounded-3xl bg-blue-50 dark:bg-dark-bg flex items-center justify-center overflow-hidden border-4 border-white dark:border-dark-border shadow-inner">
+                      {drivers.find(d => d.id === selectedCng.driverId)?.photoURL ? (
+                        <img 
+                          src={drivers.find(d => d.id === selectedCng.driverId)?.photoURL} 
+                          alt="Driver" 
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <UserIcon className="text-blue-300 dark:text-dark-muted" size={40} />
+                      )}
+                   </div>
+                   <div className="min-w-0">
+                      <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1.5">{lang === 'bn' ? 'সক্রিয় ড্রাইভার' : 'Active Driver'}</p>
+                      <h3 className="text-2xl font-black truncate text-ink dark:text-white leading-tight">
+                        {drivers.find(d => d.id === selectedCng.driverId)?.name || 'N/A'}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-2 bg-gray-50 dark:bg-dark-bg px-3 py-1.5 rounded-full inline-flex">
+                        <Smartphone size={14} className="text-blue-500" />
+                        <span className="text-xs font-black text-gray-600 dark:text-dark-muted">
+                          {drivers.find(d => d.id === selectedCng.driverId)?.phone || 'No Contact'}
+                        </span>
+                      </div>
+                   </div>
+                </motion.div>
+
+                {/* Monthly Summary */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-white dark:bg-dark-surface p-6 border-2 border-emerald-500/10 dark:border-emerald-500/5 dark:bg-emerald-500/[0.02] rounded-[32px] shadow-sm flex flex-col justify-center relative overflow-hidden"
+                >
+                   <div className="absolute top-0 right-0 p-4 opacity-[0.03] dark:opacity-[0.05] -mr-4 -mt-4">
+                      <DollarSign size={120} className="text-emerald-500" />
+                   </div>
+                   <div className="flex items-center justify-between mb-4 px-1 relative z-10">
+                      <div>
+                        <p className="text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest mb-0.5">{lang === 'bn' ? 'চলতি মাস' : 'Current Month'}</p>
+                        <p className="text-sm font-black text-ink dark:text-white">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-black text-emerald-500 dark:text-emerald-400 uppercase tracking-widest mb-0.5">{lang === 'bn' ? 'মাসিক নিট লাভ' : 'Monthly Net Profit'}</p>
+                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                          ৳{(incomes.filter(inc => {
+                             const d = new Date();
+                             const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                             return inc.date.startsWith(monthStr);
+                          }).reduce((sum, inc) => sum + inc.amount, 0) - 
+                             expenses.filter(exp => {
+                               const d = new Date();
+                               const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                               return exp.date.startsWith(monthStr);
+                             }).reduce((sum, exp) => sum + exp.amount, 0)).toLocaleString()}
+                        </p>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-4 bg-gray-50/50 dark:bg-dark-bg/50 backdrop-blur-sm p-4 rounded-2xl border border-gray-100 dark:border-dark-border relative z-10">
+                      <div className="flex-1 text-center">
+                         <p className="text-[9px] font-black text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-widest mb-1">{lang === 'bn' ? 'মোট আয়' : 'Monthly Income'}</p>
+                         <p className="text-base font-black text-ink dark:text-white">৳{incomes.filter(inc => {
+                           const d = new Date();
+                           const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                           return inc.date.startsWith(monthStr);
+                         }).reduce((sum, inc) => sum + inc.amount, 0).toLocaleString()}</p>
+                      </div>
+                      <div className="w-px h-8 bg-gray-200 dark:bg-dark-border" />
+                      <div className="flex-1 text-center">
+                         <p className="text-[9px] font-black text-rose-500/60 uppercase tracking-widest mb-1">{lang === 'bn' ? 'মোট খরচ' : 'Monthly Expense'}</p>
+                         <p className="text-base font-black text-rose-500">৳{expenses.filter(exp => {
+                           const d = new Date();
+                           const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                           return exp.date.startsWith(monthStr);
+                         }).reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}</p>
+                      </div>
+                   </div>
+                </motion.div>
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">

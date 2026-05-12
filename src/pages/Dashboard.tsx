@@ -21,10 +21,15 @@ export default function Dashboard({ lang }: { lang: Language }) {
     totalDealerSales: 0,
     totalExpenses: 0,
     vehicleCount: 0,
-    dealerCount: 0
+    dealerCount: 0,
+    dailyVehicleIncome: 0,
+    dailyMaintenanceCost: 0,
+    dailyWaterSales: 0,
+    dailyOtherExpenses: 0
   });
 
   useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
     let activeListeners = 0;
     const totalListeners = 6;
     
@@ -53,8 +58,14 @@ export default function Dashboard({ lang }: { lang: Language }) {
 
     const unsubIncome = onSnapshot(collection(db, 'vehicle_income'), (snap) => {
       let total = 0;
-      snap.forEach(doc => total += doc.data().amount || 0);
-      setStats(prev => ({ ...prev, totalVehicleIncome: total }));
+      let dailyTotal = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const amount = data.amount || 0;
+        total += amount;
+        if (data.date === today) dailyTotal += amount;
+      });
+      setStats(prev => ({ ...prev, totalVehicleIncome: total, dailyVehicleIncome: dailyTotal }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -63,8 +74,14 @@ export default function Dashboard({ lang }: { lang: Language }) {
 
     const unsubMaintenance = onSnapshot(collection(db, 'maintenance'), (snap) => {
       let total = 0;
-      snap.forEach(doc => total += doc.data().cost || 0);
-      setStats(prev => ({ ...prev, totalMaintenanceCost: total }));
+      let dailyTotal = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const cost = data.cost || 0;
+        total += cost;
+        if (data.date === today) dailyTotal += cost;
+      });
+      setStats(prev => ({ ...prev, totalMaintenanceCost: total, dailyMaintenanceCost: dailyTotal }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -73,8 +90,14 @@ export default function Dashboard({ lang }: { lang: Language }) {
 
     const unsubSales = onSnapshot(collection(db, 'water_sales'), (snap) => {
       let total = 0;
-      snap.forEach(doc => total += doc.data().totalAmount || 0);
-      setStats(prev => ({ ...prev, totalDealerSales: total }));
+      let dailyTotal = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const amount = data.totalAmount || 0;
+        total += amount;
+        if (data.date === today) dailyTotal += amount;
+      });
+      setStats(prev => ({ ...prev, totalDealerSales: total, dailyWaterSales: dailyTotal }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -83,8 +106,14 @@ export default function Dashboard({ lang }: { lang: Language }) {
 
     const unsubExpenses = onSnapshot(collection(db, 'company_expenses'), (snap) => {
       let total = 0;
-      snap.forEach(doc => total += doc.data().amount || 0);
-      setStats(prev => ({ ...prev, totalExpenses: total }));
+      let dailyTotal = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const amount = data.amount || 0;
+        total += amount;
+        if (data.date === today) dailyTotal += amount;
+      });
+      setStats(prev => ({ ...prev, totalExpenses: total, dailyOtherExpenses: dailyTotal }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -113,12 +142,66 @@ export default function Dashboard({ lang }: { lang: Language }) {
   const vehicleNet = stats.totalVehicleIncome - stats.totalMaintenanceCost;
   const waterNet = stats.totalDealerSales - stats.totalExpenses;
 
+  const dailyVehicleProfit = stats.dailyVehicleIncome - stats.dailyMaintenanceCost;
+  const dailyWaterProfit = stats.dailyWaterSales - stats.dailyOtherExpenses;
+  const totalDailyProfit = dailyVehicleProfit + dailyWaterProfit;
+
   return (
     <div className="space-y-6 lg:space-y-10 px-1 sm:px-0">
-      <header className="px-1 sm:px-0">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight dark:text-white">{t.dashboardOverview}</h1>
-        <p className="text-gray-400 dark:text-dark-muted mt-1 text-xs sm:text-sm font-medium">{t.allStats}</p>
+      <header className="px-1 sm:px-0 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight dark:text-white">{t.dashboardOverview}</h1>
+          <p className="text-gray-400 dark:text-dark-muted mt-1 text-xs sm:text-sm font-medium">{t.allStats}</p>
+        </div>
+        <div className="bg-blue-600 dark:bg-blue-600 px-6 py-3 rounded-2xl shadow-xl shadow-blue-500/20">
+           <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-1">{lang === 'bn' ? 'আজকের মোট লাভ' : 'Total Daily Profit'}</p>
+           <p className="text-xl font-black text-white">৳{totalDailyProfit.toLocaleString()}</p>
+        </div>
       </header>
+
+      {/* --- Daily Profit Summary Section --- */}
+      <section className="space-y-4 lg:space-y-6">
+        <div className="flex items-center gap-3 px-2 sm:px-0">
+           <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl text-emerald-600 dark:text-emerald-400"><DollarSign size={18} /></div>
+           <h2 className="text-base sm:text-lg lg:text-xl font-bold dark:text-white uppercase tracking-wider">{lang === 'bn' ? 'আজকের লাভের সারাংশ' : 'Daily Profit Summary'}</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+           <motion.div 
+             whileHover={{ y: -3 }}
+             className="bg-white dark:bg-dark-surface p-6 rounded-[32px] border border-gray-100 dark:border-dark-border shadow-sm flex flex-col justify-between"
+           >
+              <div>
+                <p className="text-gray-400 dark:text-dark-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">{t.vehicleBusiness}</p>
+                <div className="flex items-end justify-between">
+                  <p className={`text-2xl lg:text-3xl font-black ${dailyVehicleProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
+                    ৳{dailyVehicleProfit.toLocaleString()}
+                  </p>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-gray-500">{t.totalVehicleIncome}: ৳{stats.dailyVehicleIncome.toLocaleString()}</p>
+                    <p className="text-[10px] font-bold text-rose-500">{t.totalMaintenanceCost}: ৳{stats.dailyMaintenanceCost.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+           </motion.div>
+           <motion.div 
+             whileHover={{ y: -3 }}
+             className="bg-white dark:bg-dark-surface p-6 rounded-[32px] border border-gray-100 dark:border-dark-border shadow-sm flex flex-col justify-between"
+           >
+              <div>
+                <p className="text-gray-400 dark:text-dark-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5">{t.waterBusiness}</p>
+                <div className="flex items-end justify-between">
+                  <p className={`text-2xl lg:text-3xl font-black ${dailyWaterProfit >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600'}`}>
+                    ৳{dailyWaterProfit.toLocaleString()}
+                  </p>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-gray-500">{t.totalWaterSales}: ৳{stats.dailyWaterSales.toLocaleString()}</p>
+                    <p className="text-[10px] font-bold text-rose-500">{t.otherExpenses}: ৳{stats.dailyOtherExpenses.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+           </motion.div>
+        </div>
+      </section>
 
       {/* --- Vehicle Business Section --- */}
       <section className="space-y-4 lg:space-y-6">
