@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion } from 'motion/react';
 import { 
   TrendingUp, 
@@ -38,40 +38,58 @@ export default function Dashboard({ lang }: { lang: Language }) {
     const unsubVehicles = onSnapshot(collection(db, 'vehicles'), (snap) => {
       setStats(prev => ({ ...prev, vehicleCount: snap.size }));
       decrementLoading();
-    }, () => decrementLoading());
+    }, (err) => {
+      decrementLoading();
+      handleFirestoreError(err, OperationType.GET, 'vehicles');
+    });
 
     const unsubDealers = onSnapshot(collection(db, 'dealers'), (snap) => {
       setStats(prev => ({ ...prev, dealerCount: snap.size }));
       decrementLoading();
-    }, () => decrementLoading());
+    }, (err) => {
+      decrementLoading();
+      handleFirestoreError(err, OperationType.GET, 'dealers');
+    });
 
     const unsubIncome = onSnapshot(collection(db, 'vehicle_income'), (snap) => {
       let total = 0;
       snap.forEach(doc => total += doc.data().amount || 0);
       setStats(prev => ({ ...prev, totalVehicleIncome: total }));
       decrementLoading();
-    }, () => decrementLoading());
+    }, (err) => {
+      decrementLoading();
+      handleFirestoreError(err, OperationType.GET, 'vehicle_income');
+    });
 
     const unsubMaintenance = onSnapshot(collection(db, 'maintenance'), (snap) => {
       let total = 0;
       snap.forEach(doc => total += doc.data().cost || 0);
       setStats(prev => ({ ...prev, totalMaintenanceCost: total }));
       decrementLoading();
-    }, () => decrementLoading());
+    }, (err) => {
+      decrementLoading();
+      handleFirestoreError(err, OperationType.GET, 'maintenance');
+    });
 
     const unsubSales = onSnapshot(collection(db, 'water_sales'), (snap) => {
       let total = 0;
       snap.forEach(doc => total += doc.data().totalAmount || 0);
       setStats(prev => ({ ...prev, totalDealerSales: total }));
       decrementLoading();
-    }, () => decrementLoading());
+    }, (err) => {
+      decrementLoading();
+      handleFirestoreError(err, OperationType.GET, 'water_sales');
+    });
 
     const unsubExpenses = onSnapshot(collection(db, 'company_expenses'), (snap) => {
       let total = 0;
       snap.forEach(doc => total += doc.data().amount || 0);
       setStats(prev => ({ ...prev, totalExpenses: total }));
       decrementLoading();
-    }, () => decrementLoading());
+    }, (err) => {
+      decrementLoading();
+      handleFirestoreError(err, OperationType.GET, 'company_expenses');
+    });
 
     return () => {
       unsubVehicles();

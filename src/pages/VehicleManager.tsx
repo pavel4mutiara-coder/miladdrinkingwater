@@ -569,7 +569,7 @@ function VehicleSummary({ vehicleId, lang }: { vehicleId: string, lang: Language
         });
         return next;
       });
-    });
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'vehicle_income'));
 
     const qMaint = query(collection(db, 'maintenance'), where('vehicleId', '==', vehicleId));
     const unsubMaint = onSnapshot(qMaint, (snap) => {
@@ -591,7 +591,7 @@ function VehicleSummary({ vehicleId, lang }: { vehicleId: string, lang: Language
         });
         return next;
       });
-    });
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'maintenance'));
 
     return () => {
       unsubIncome();

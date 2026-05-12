@@ -3,6 +3,19 @@ import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { FallbackProps } from 'react-error-boundary';
 
 export const ErrorFallback: React.FC<FallbackProps> = ({ error, resetErrorBoundary }) => {
+  let displayMessage = error.message;
+  let userFriendlyMessage = '';
+
+  try {
+    const errorData = JSON.parse(error.message);
+    if (errorData.userFriendlyMessage) {
+      userFriendlyMessage = errorData.userFriendlyMessage;
+      displayMessage = errorData.error;
+    }
+  } catch (e) {
+    // Not a JSON error message, skip
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg p-4">
       <div className="max-w-md w-full bg-white dark:bg-dark-surface p-8 rounded-3xl shadow-xl border border-red-100 dark:border-red-900/20 text-center">
@@ -11,11 +24,11 @@ export const ErrorFallback: React.FC<FallbackProps> = ({ error, resetErrorBounda
         </div>
         
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Something went wrong
+          {userFriendlyMessage || 'Something went wrong'}
         </h1>
         
         <p className="text-gray-600 dark:text-dark-muted mb-6 text-sm">
-          {error.message || 'An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.'}
+          {userFriendlyMessage ? displayMessage : (error.message || 'An unexpected error occurred. Please try refreshing the page.')}
         </p>
 
         <div className="space-y-3">

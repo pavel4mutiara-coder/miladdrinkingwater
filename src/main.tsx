@@ -41,6 +41,22 @@ if (!checkVersion()) {
   // Handle unhandled rejections
   window.onunhandledrejection = (event) => {
     console.error('Unhandled Promise Rejection:', event.reason);
+    const reason = event.reason?.message || String(event.reason);
+    
+    if (reason.includes('ChunkLoadError') || reason.includes('Loading chunk')) {
+      console.warn('Chunk load error in promise rejection. Reloading...');
+      window.location.reload();
+    }
+    
+    // If it's a Firestore error JSON, we might want to log it specifically
+    if (typeof reason === 'string' && reason.startsWith('{"error":')) {
+      try {
+        const errorData = JSON.parse(reason);
+        console.warn('Caught background Firestore error:', errorData.userFriendlyMessage);
+      } catch (e) {
+        // Not a standard error JSON
+      }
+    }
   };
 
   const rootElement = document.getElementById('root');

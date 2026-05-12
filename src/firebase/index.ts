@@ -106,6 +106,11 @@ interface FirestoreErrorInfo {
     email?: string | null;
     emailVerified?: boolean | null;
     isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
   }
 }
 
@@ -116,10 +121,15 @@ export function handleFirestoreError(error: any, operationType: OperationType, p
   const errInfo: FirestoreErrorInfo = {
     error: errorMessage,
     authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
+      userId: auth?.currentUser?.uid || null,
+      email: auth?.currentUser?.email || null,
+      emailVerified: auth?.currentUser?.emailVerified || null,
+      isAnonymous: auth?.currentUser?.isAnonymous || null,
+      tenantId: auth?.currentUser?.tenantId || null,
+      providerInfo: auth?.currentUser?.providerData?.map((provider: any) => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
     },
     operationType,
     path
@@ -137,9 +147,11 @@ export function handleFirestoreError(error: any, operationType: OperationType, p
   if (errorCode === 'permission-denied') {
     userMessage = 'Permission Denied: You don\'t have access to this action.';
   } else if (errorCode === 'unavailable') {
-    userMessage = 'Network Error: Database is currently unreachable.';
+    userMessage = 'Network Error: Database is currently unreachable or you are offline.';
   } else if (errorCode === 'not-found') {
-    userMessage = 'Data not found.';
+    userMessage = 'Requested data not found.';
+  } else if (errorCode === 'resource-exhausted') {
+    userMessage = 'Database quota exceeded. Please try again tomorrow.';
   }
 
   // We throw a standardized error that can be caught by UI
