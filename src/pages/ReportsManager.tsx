@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy, where, Timestamp } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion } from 'motion/react';
 import { 
   FileText, 
@@ -13,7 +13,7 @@ import {
   Filter,
   BarChart2
 } from 'lucide-react';
-import { translations, Language } from '../locales';
+import { translations, Language } from '../utils/locales';
 
 export default function ReportsManager({ lang }: { lang: Language }) {
   const t = translations[lang];

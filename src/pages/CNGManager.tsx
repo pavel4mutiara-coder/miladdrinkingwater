@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, updateDoc, orderBy, Timestamp, where } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -22,8 +22,8 @@ import {
   Calendar
 } from 'lucide-react';
 import { CNG, CNGIncome, CNGExpense, Driver } from '../types';
-import { translations, Language } from '../locales';
-import ConfirmModal from './ui/ConfirmModal';
+import { translations, Language } from '../utils/locales';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 interface CNGManagerProps {
   lang: Language;
@@ -625,79 +625,75 @@ export default function CNGManager({ lang }: CNGManagerProps) {
       />
 
       {isAdding && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/60 backdrop-blur-sm">
            <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-dark-surface w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden border border-gray-100 dark:border-dark-border"
+            className="bg-white dark:bg-dark-surface w-full max-w-md rounded-[32px] sm:rounded-[40px] shadow-2xl relative border border-gray-100 dark:border-dark-border max-h-[90vh] flex flex-col"
           >
-             <div className="p-6 border-b border-gray-50 dark:border-dark-border flex items-center justify-between">
-              <h3 className="text-xl font-black dark:text-white">{t.addCNG}</h3>
-              <button onClick={() => setIsAdding(false)} className="text-gray-300 hover:text-gray-500 transition-colors p-1">
+             <div className="p-6 border-b border-gray-50 dark:border-dark-border flex items-center justify-between shrink-0">
+              <h3 className="text-xl font-black dark:text-white uppercase tracking-tight">{t.addCNG}</h3>
+              <button 
+                onClick={() => setIsAdding(false)} 
+                className="text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="w-full p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 pb-10">
                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.cngNumber}</label>
+                  <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.cngNumber}</label>
                   <input 
                     required
                     type="text"
                     placeholder="SYL-XXX"
                     value={form.cngNumber}
                     onChange={(e) => setForm({...form, cngNumber: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
                   />
                </div>
 
                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{lang === 'bn' ? 'ড্রাইভার নির্বাচন করুন' : 'Select Driver'}</label>
+                  <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{lang === 'bn' ? 'ড্রাইভার নির্বাচন করুন' : 'Select Driver'}</label>
                   <select 
                     required
                     value={form.driverId}
                     onChange={(e) => setForm({...form, driverId: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm appearance-none"
                   >
                      <option value="">Choose Driver</option>
                      {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                </div>
 
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.dailyPayment}</label>
+                    <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.dailyPayment}</label>
                     <input 
                       required
                       type="number"
                       value={form.dailyPayment || ''}
                       onChange={(e) => setForm({...form, dailyPayment: Number(e.target.value)})}
-                      className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                      className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.dueAmount}</label>
+                    <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.dueAmount}</label>
                     <input 
                       type="number"
                       value={form.dueAmount || ''}
                       onChange={(e) => setForm({...form, dueAmount: Number(e.target.value)})}
-                      className="w-full bg-gray-50 dark:bg-dark-bg border-none rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                      className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
                     />
                   </div>
                </div>
 
-               <div className="flex gap-4 pt-4">
-                <button 
-                  type="button" 
-                  onClick={() => setIsAdding(false)}
-                  className="flex-1 py-3.5 bg-gray-50 dark:bg-dark-bg text-gray-500 dark:text-dark-muted font-bold rounded-xl hover:bg-gray-100 transition-all text-sm"
-                >
-                  {t.close}
-                </button>
+               <div className="flex gap-4 pt-4 sticky bottom-0 bg-white dark:bg-dark-surface pt-4">
                 <button 
                   disabled={isSaving}
                   type="submit" 
-                  className="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 text-sm"
+                  className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
                 >
                   {isSaving ? t.loading : <><Save size={18} /> {t.save}</>}
                 </button>

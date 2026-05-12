@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, Timestamp, orderBy, where, serverTimestamp } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Truck, 
@@ -20,7 +20,9 @@ import {
   Printer,
   FileText,
   ArrowUpRight,
-  ArrowDownLeft
+  ArrowDownLeft,
+  Loader2,
+  Save
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -35,9 +37,9 @@ import {
   Line
 } from 'recharts';
 import { Vehicle, Maintenance, VehicleIncome } from '../types';
-import { translations, Language } from '../locales';
-import ImageUpload from './ui/ImageUpload';
-import ConfirmModal from './ui/ConfirmModal';
+import { translations, Language } from '../utils/locales';
+import ImageUpload from '../components/ui/ImageUpload';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 export default function VehicleManager({ lang }: { lang: Language }) {
   const t = translations[lang];
@@ -430,7 +432,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-black mb-4 sm:mb-8 dark:text-white shrink-0 px-1">
                 {editingVehicleId ? t.editVehicle : t.addVehicle}
               </h2>
-              <form onSubmit={handleAddVehicle} className="space-y-3 sm:space-y-4 overflow-y-auto px-1 custom-scrollbar flex-1 pb-4">
+              <form onSubmit={handleAddVehicle} className="w-full space-y-3 sm:space-y-4 overflow-y-auto px-1 custom-scrollbar flex-1 pb-4">
                   <ImageUpload 
                     label="Vehicle Photo"
                     currentImageUrl={newVehicle.imageURL}
@@ -443,8 +445,8 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                     folder="vehicles"
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    <div className="space-y-1 col-span-1 md:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="space-y-1 col-span-1 sm:col-span-2">
                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.vehicleNumber}</label>
                        <input 
                          required
@@ -455,7 +457,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          placeholder="e.g. D-123"
                        />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 col-span-1">
                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.vehicleName}</label>
                        <input 
                          required
@@ -466,7 +468,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          placeholder="e.g. Pickup"
                        />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 col-span-1">
                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.vehicleType}</label>
                        <input 
                          required
@@ -477,7 +479,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          placeholder="e.g. Mini Truck"
                        />
                     </div>
-                    <div className="space-y-1 col-span-2">
+                    <div className="space-y-1 col-span-1 sm:col-span-2">
                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.regNumber}</label>
                        <input 
                          type="text" 
@@ -486,7 +488,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                        />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 col-span-1">
                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.fitnessDate}</label>
                        <input 
                          type="date" 
@@ -495,7 +497,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                        />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 col-span-1">
                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.insuranceDate}</label>
                        <input 
                          type="date" 
@@ -504,7 +506,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                          className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
                        />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1 col-span-1 sm:col-span-2">
                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.taxToken}</label>
                        <input 
                          type="date" 

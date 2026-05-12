@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, Timestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '../firebase';
 import { motion } from 'motion/react';
 import { 
   TrendingUp, 
@@ -10,10 +10,11 @@ import {
   Droplets,
   DollarSign
 } from 'lucide-react';
-import { translations, Language } from '../locales';
+import { translations, Language } from '../utils/locales';
 
 export default function Dashboard({ lang }: { lang: Language }) {
   const t = translations[lang];
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalVehicleIncome: 0,
     totalMaintenanceCost: 0,
@@ -24,37 +25,53 @@ export default function Dashboard({ lang }: { lang: Language }) {
   });
 
   useEffect(() => {
+    let activeListeners = 0;
+    const totalListeners = 6;
+    
+    const decrementLoading = () => {
+      activeListeners++;
+      if (activeListeners >= totalListeners) {
+        setLoading(false);
+      }
+    };
+
     const unsubVehicles = onSnapshot(collection(db, 'vehicles'), (snap) => {
       setStats(prev => ({ ...prev, vehicleCount: snap.size }));
-    });
+      decrementLoading();
+    }, () => decrementLoading());
 
     const unsubDealers = onSnapshot(collection(db, 'dealers'), (snap) => {
       setStats(prev => ({ ...prev, dealerCount: snap.size }));
-    });
+      decrementLoading();
+    }, () => decrementLoading());
 
     const unsubIncome = onSnapshot(collection(db, 'vehicle_income'), (snap) => {
       let total = 0;
       snap.forEach(doc => total += doc.data().amount || 0);
       setStats(prev => ({ ...prev, totalVehicleIncome: total }));
-    });
+      decrementLoading();
+    }, () => decrementLoading());
 
     const unsubMaintenance = onSnapshot(collection(db, 'maintenance'), (snap) => {
       let total = 0;
       snap.forEach(doc => total += doc.data().cost || 0);
       setStats(prev => ({ ...prev, totalMaintenanceCost: total }));
-    });
+      decrementLoading();
+    }, () => decrementLoading());
 
     const unsubSales = onSnapshot(collection(db, 'water_sales'), (snap) => {
       let total = 0;
       snap.forEach(doc => total += doc.data().totalAmount || 0);
       setStats(prev => ({ ...prev, totalDealerSales: total }));
-    });
+      decrementLoading();
+    }, () => decrementLoading());
 
     const unsubExpenses = onSnapshot(collection(db, 'company_expenses'), (snap) => {
       let total = 0;
       snap.forEach(doc => total += doc.data().amount || 0);
       setStats(prev => ({ ...prev, totalExpenses: total }));
-    });
+      decrementLoading();
+    }, () => decrementLoading());
 
     return () => {
       unsubVehicles();
@@ -65,6 +82,15 @@ export default function Dashboard({ lang }: { lang: Language }) {
       unsubExpenses();
     };
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-gray-400 dark:text-dark-muted font-bold text-[10px] uppercase tracking-widest">{t.loading}...</p>
+      </div>
+    );
+  }
 
   const vehicleNet = stats.totalVehicleIncome - stats.totalMaintenanceCost;
   const waterNet = stats.totalDealerSales - stats.totalExpenses;

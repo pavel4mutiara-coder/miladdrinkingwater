@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, Timestamp, orderBy, where, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, 
@@ -21,8 +21,8 @@ import {
   Check
 } from 'lucide-react';
 import { Dealer, WaterSale } from '../types';
-import { translations, Language } from '../locales';
-import ConfirmModal from './ui/ConfirmModal';
+import { translations, Language } from '../utils/locales';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 export default function DealerManager({ lang }: { lang: Language }) {
   const t = translations[lang];
@@ -288,7 +288,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
       {/* Add Dealer Modal */}
       <AnimatePresence>
         {isAddingDealer && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/60 backdrop-blur-sm">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -296,14 +296,14 @@ export default function DealerManager({ lang }: { lang: Language }) {
               className="bg-white dark:bg-dark-surface rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border max-h-[90vh] flex flex-col"
             >
               <div className="flex justify-between items-center mb-6 sm:mb-8 shrink-0">
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black dark:text-white">{t.addDealer}</h2>
-                <button onClick={() => setIsAddingDealer(false)} className="text-gray-400 dark:text-dark-muted hover:text-ink bg-gray-50 dark:bg-dark-bg p-2 rounded-full">
-                  <X />
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black dark:text-white uppercase tracking-tight">{t.addDealer}</h2>
+                <button onClick={() => setIsAddingDealer(false)} className="text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full transition-colors">
+                  <X size={20} />
                 </button>
               </div>
-            <form onSubmit={handleAddDealer} className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pb-2">
+              <form onSubmit={handleAddDealer} className="w-full space-y-4 overflow-y-auto custom-scrollbar flex-1 pb-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerName}</label>
+                  <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerName}</label>
                   <input 
                     type="text" 
                     required
@@ -313,7 +313,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerAddress}</label>
+                  <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerAddress}</label>
                   <input 
                     type="text" 
                     required
@@ -323,7 +323,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerPhone}</label>
+                  <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerPhone}</label>
                   <input 
                     type="text" 
                     required
@@ -332,7 +332,9 @@ export default function DealerManager({ lang }: { lang: Language }) {
                     className="w-full px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 transition-all dark:text-white text-sm" 
                   />
                 </div>
-                <button type="submit" className="w-full py-4 bg-ink dark:bg-blue-600 text-white rounded-xl font-bold mt-2 hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 text-sm">{t.save}</button>
+                <button type="submit" disabled={isSaving} className="w-full py-4 bg-ink dark:bg-blue-600 text-white rounded-2xl font-bold mt-2 hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 text-sm disabled:opacity-50">
+                  {isSaving ? (lang === 'bn' ? 'সেভ হচ্ছে...' : 'Saving...') : t.save}
+                </button>
               </form>
             </motion.div>
           </div>
@@ -342,7 +344,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
       {/* Edit Dealer Modal */}
       <AnimatePresence>
         {isEditingDealer && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/60 backdrop-blur-sm">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -350,14 +352,14 @@ export default function DealerManager({ lang }: { lang: Language }) {
               className="bg-white dark:bg-dark-surface rounded-[32px] sm:rounded-[40px] p-6 sm:p-10 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border max-h-[90vh] flex flex-col"
             >
               <div className="flex justify-between items-center mb-6 sm:mb-8 shrink-0">
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black dark:text-white">{t.editDealer}</h2>
-                <button onClick={() => setIsEditingDealer(false)} className="text-gray-400 dark:text-dark-muted hover:text-ink bg-gray-50 dark:bg-dark-bg p-2 rounded-full">
-                  <X />
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black dark:text-white uppercase tracking-tight">{t.editDealer}</h2>
+                <button onClick={() => setIsEditingDealer(false)} className="text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full transition-colors">
+                  <X size={20} />
                 </button>
               </div>
-              <form onSubmit={handleUpdateDealer} className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pb-2">
+              <form onSubmit={handleUpdateDealer} className="w-full space-y-4 overflow-y-auto custom-scrollbar flex-1 pb-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerName}</label>
+                  <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerName}</label>
                   <input 
                     type="text" 
                     required
@@ -367,7 +369,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerAddress}</label>
+                  <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerAddress}</label>
                   <input 
                     type="text" 
                     required
@@ -377,7 +379,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerPhone}</label>
+                  <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-[0.2em] ml-1">{t.dealerPhone}</label>
                   <input 
                     type="text" 
                     required
@@ -389,7 +391,7 @@ export default function DealerManager({ lang }: { lang: Language }) {
                 <button 
                   type="submit" 
                   disabled={isSaving}
-                  className="w-full py-4 bg-ink dark:bg-blue-600 text-white rounded-xl font-bold mt-2 hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 text-sm"
+                  className="w-full py-4 bg-ink dark:bg-blue-600 text-white rounded-2xl font-bold mt-2 hover:bg-black dark:hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 text-sm"
                 >
                   {isSaving ? (lang === 'bn' ? 'সেভ হচ্ছে...' : 'Saving...') : t.update}
                 </button>
@@ -680,15 +682,15 @@ function SalesRecorder({ dealer, lang }: { dealer: Dealer, lang: Language }) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             onSubmit={handleSubmit}
-            className="bg-gray-50 dark:bg-dark-bg/50 border border-gray-100 dark:border-dark-border p-4 rounded-3xl mb-6 space-y-4 overflow-hidden"
+            className="w-full bg-gray-50 dark:bg-dark-bg/50 border border-gray-100 dark:border-dark-border p-4 rounded-3xl mb-6 space-y-4 overflow-hidden"
           >
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.date}</label>
+                <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-1">{t.date}</label>
                 <input type="date" required value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.product}</label>
+                <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-1">{t.product}</label>
                 <select value={form.productType} onChange={e => setForm({...form, productType: e.target.value as any})} className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20 appearance-none">
                   <option value="20L Jar">{lang === 'bn' ? '২০লি যার' : '20L Jar'}</option>
                   <option value="5L Bottle">{lang === 'bn' ? '৫লি বোতল' : '5L Bottle'}</option>
@@ -696,14 +698,14 @@ function SalesRecorder({ dealer, lang }: { dealer: Dealer, lang: Language }) {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.quantity}</label>
+                <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-1">{t.quantity}</label>
                 <input type="number" required placeholder="0" value={form.quantity || ''} onChange={e => setForm({...form, quantity: Number(e.target.value)})} className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest ml-1">{t.unitPrice}</label>
+                <label className="text-[10px] font-bold text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-1">{t.unitPrice}</label>
                 <input type="number" required placeholder="0" value={form.unitPrice || ''} onChange={e => setForm({...form, unitPrice: Number(e.target.value)})} className="w-full px-4 py-2.5 bg-white dark:bg-dark-surface border-none rounded-xl text-xs dark:text-white focus:ring-2 focus:ring-blue-500/20" />
               </div>
-              <div className="col-span-2 lg:col-span-1 space-y-1">
+              <div className="col-span-1 sm:col-span-2 lg:col-span-1 space-y-1">
                 <label className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest ml-1">{lang === 'bn' ? 'মোট টাকা' : 'Total Amount'}</label>
                 <input type="number" required placeholder="0" value={form.totalAmount || ''} onChange={e => handleTotalChange(Number(e.target.value))} className="w-full px-4 py-2.5 border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl text-xs font-black text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500/20 outline-none" />
               </div>

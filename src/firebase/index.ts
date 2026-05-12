@@ -4,17 +4,22 @@ import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-const config = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfig.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfig.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfig.appId,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseConfig.measurementId
+const getEnv = (key: string, fallback: string) => {
+  const value = import.meta.env[key];
+  return value && value.trim() !== '' ? value : fallback;
 };
 
-const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfig.firestoreDatabaseId;
+const config = {
+  apiKey: getEnv('VITE_FIREBASE_API_KEY', firebaseConfig.apiKey),
+  authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN', firebaseConfig.authDomain),
+  projectId: getEnv('VITE_FIREBASE_PROJECT_ID', firebaseConfig.projectId),
+  storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET', firebaseConfig.storageBucket),
+  messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID', firebaseConfig.messagingSenderId),
+  appId: getEnv('VITE_FIREBASE_APP_ID', firebaseConfig.appId),
+  measurementId: getEnv('VITE_FIREBASE_MEASUREMENT_ID', firebaseConfig.measurementId)
+};
+
+const databaseId = getEnv('VITE_FIREBASE_DATABASE_ID', firebaseConfig.firestoreDatabaseId);
 
 // Defensive check: Ensure at least the API Key and Project ID are present
 let initializationError: Error | null = null;
@@ -23,15 +28,18 @@ let db: any = null;
 let auth: any = null;
 let storage: any = null;
 
+const isValidConfig = config.apiKey && config.projectId && config.apiKey !== 'AIza...'; // check for placeholders if any
+
 if (!config.apiKey || !config.projectId) {
-  initializationError = new Error('Firebase credentials are missing. Please ensure VITE_FIREBASE_API_KEY and VITE_FIREBASE_PROJECT_ID are set in your environment variables.');
-  console.error('CRITICAL:', initializationError.message);
+  initializationError = new Error('Firebase configuration is incomplete. Please check your setup.');
+  console.error('CRITICAL: Firebase configuration missing.');
 } else {
   try {
     app = initializeApp(config);
     db = getFirestore(app, databaseId);
     auth = getAuth(app);
     storage = getStorage(app);
+    console.log('Firebase initialized successfully with ' + (import.meta.env.VITE_FIREBASE_API_KEY ? 'Environment Variables' : 'Local Fallback Config'));
   } catch (error: any) {
     initializationError = error;
     console.error('Firebase Initialization Failed:', error);

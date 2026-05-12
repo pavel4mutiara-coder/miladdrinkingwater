@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, updateDoc, orderBy, Timestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -19,9 +19,9 @@ import {
   Loader2
 } from 'lucide-react';
 import { Driver } from '../types';
-import { translations, Language } from '../locales';
-import ImageUpload from './ui/ImageUpload';
-import ConfirmModal from './ui/ConfirmModal';
+import { translations, Language } from '../utils/locales';
+import ImageUpload from '../components/ui/ImageUpload';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 interface DriverManagerProps {
   lang: Language;
@@ -232,25 +232,28 @@ export default function DriverManager({ lang }: DriverManagerProps) {
       />
 
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/60 backdrop-blur-sm">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="bg-white dark:bg-dark-surface w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden border border-gray-100 dark:border-dark-border"
+            className="bg-white dark:bg-dark-surface w-full max-w-md rounded-[32px] sm:rounded-[40px] shadow-2xl relative border border-gray-100 dark:border-dark-border max-h-[90vh] flex flex-col"
           >
-            <div className="p-6 border-b border-gray-50 dark:border-dark-border flex items-center justify-between bg-gray-50/50 dark:bg-dark-bg/50">
+            <div className="p-6 border-b border-gray-50 dark:border-dark-border flex items-center justify-between bg-gray-50/50 dark:bg-dark-bg/50 shrink-0">
               <h3 className="text-xl font-black dark:text-white flex items-center gap-2">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                   <User size={18} />
                 </div>
                 {editingDriver ? t.editDriver : t.addDriver}
               </h3>
-              <button onClick={resetForm} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+              <button 
+                onClick={resetForm} 
+                className="p-2 text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg rounded-full transition-colors"
+              >
                 <X size={20} />
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[85vh] overflow-y-auto custom-scrollbar">
+            <form onSubmit={handleSubmit} className="w-full p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1 pb-10">
               <ImageUpload 
                 label={t.driverPhoto}
                 currentImageUrl={form.photoURL}
@@ -259,75 +262,75 @@ export default function DriverManager({ lang }: DriverManagerProps) {
                 folder="drivers"
               />
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-1.5 block">{t.driverName}</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="col-span-1 sm:col-span-2">
+                  <label className="text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.driverName}</label>
                   <input 
                     required
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({...form, name: e.target.value})}
                     placeholder="e.g. Abul Kashem"
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-1.5 block">{t.driverPhone}</label>
+                  <label className="text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.driverPhone}</label>
                   <input 
                     required
                     type="tel"
                     value={form.phone}
                     onChange={(e) => setForm({...form, phone: e.target.value})}
                     placeholder="017xxxxxxxx"
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-1.5 block">{t.nid}</label>
+                  <label className="text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.nid}</label>
                   <input 
                     required
                     type="text"
                     value={form.nid}
                     onChange={(e) => setForm({...form, nid: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-1.5 block">{t.licenseNumber}</label>
+                  <label className="text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.licenseNumber}</label>
                   <input 
                     required
                     type="text"
                     value={form.licenseNumber}
                     onChange={(e) => setForm({...form, licenseNumber: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-1.5 block">{t.emergency}</label>
+                  <label className="text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.emergency}</label>
                   <input 
                     required
                     type="tel"
                     value={form.emergencyContact}
                     onChange={(e) => setForm({...form, emergencyContact: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white text-sm"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-1.5 block">{t.driverAddress}</label>
+                <div className="col-span-1 sm:col-span-2">
+                  <label className="text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest ml-4 mb-1.5 block">{t.driverAddress}</label>
                   <textarea 
                     required
                     value={form.address}
                     onChange={(e) => setForm({...form, address: e.target.value})}
-                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white h-20 resize-none text-sm"
+                    className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all dark:text-white h-20 resize-none text-sm"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 sticky bottom-0 bg-white dark:bg-dark-surface pt-4">
                 <button 
                   disabled={isSaving}
                   type="submit" 
-                  className="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isSaving ? (
                     <Loader2 className="animate-spin" size={20} />

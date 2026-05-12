@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, Timestamp, orderBy, where, serverTimestamp } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   DollarSign, 
@@ -16,8 +16,8 @@ import {
   Users
 } from 'lucide-react';
 import { CompanyExpense, ExpenseCategory } from '../types';
-import { translations, Language } from '../locales';
-import ConfirmModal from './ui/ConfirmModal';
+import { translations, Language } from '../utils/locales';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 export default function ExpenseManager({ lang }: { lang: Language }) {
   const t = translations[lang];
@@ -378,44 +378,45 @@ function CategoryModal({ isOpen, onClose, categories, lang }: { isOpen: boolean,
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/60 backdrop-blur-sm">
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white dark:bg-dark-surface rounded-3xl p-6 lg:p-8 max-w-md w-full shadow-2xl relative border dark:border-dark-border"
+            className="bg-white dark:bg-dark-surface rounded-[32px] sm:rounded-[40px] p-6 lg:p-8 max-w-md w-full shadow-2xl relative border border-gray-100 dark:border-dark-border max-h-[90vh] flex flex-col"
           >
-            <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white p-1">
-              <X size={24} />
-            </button>
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <h2 className="text-xl lg:text-2xl font-black text-ink dark:text-white uppercase tracking-tight">{lang === 'bn' ? 'ক্যাটেগরি ম্যানেজ করুন' : 'Manage Categories'}</h2>
+              <button onClick={onClose} className="text-gray-400 dark:text-dark-muted hover:text-ink dark:hover:text-white bg-gray-50 dark:bg-dark-bg p-2 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
             
-            <h2 className="text-xl lg:text-2xl font-bold mb-6 text-ink dark:text-white">{lang === 'bn' ? 'ক্যাটেগরি ম্যানেজ করুন' : 'Manage Categories'}</h2>
-            
-            <form onSubmit={handleAdd} className="mb-6 lg:mb-8 flex gap-2">
+            <form onSubmit={handleAdd} className="w-full mb-6 lg:mb-8 flex gap-2 shrink-0">
               <input 
                 type="text" 
                 placeholder={lang === 'bn' ? "নতুন ক্যাটেগরির নাম..." : "New category name..."} 
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
-                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 dark:text-white text-sm"
+                className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-dark-bg border border-gray-100 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white text-sm"
               />
-              <button className="bg-ink dark:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-black dark:hover:bg-blue-700 transition-colors uppercase tracking-wider">{lang === 'bn' ? 'যোগ করুন' : 'Add'}</button>
+              <button disabled={!newName} className="bg-ink dark:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-black dark:hover:bg-blue-700 transition-colors uppercase tracking-wider disabled:opacity-50">{lang === 'bn' ? 'যোগ' : 'Add'}</button>
             </form>
 
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-2 overflow-y-auto pr-1 custom-scrollbar flex-1 pb-4">
               {categories.map(c => (
                 <div key={c.id} className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 dark:bg-dark-bg/50 rounded-xl lg:rounded-2xl group transition-all hover:bg-gray-100 dark:hover:bg-dark-bg">
-                  <span className="font-medium text-sm text-ink dark:text-white">{c.name}</span>
+                  <span className="font-bold text-sm text-ink dark:text-white">{c.name}</span>
                   <button 
                     type="button"
                     onClick={() => setConfirmModal({ isOpen: true, id: c.id })}
-                    className="text-gray-300 dark:text-dark-muted hover:text-red-500 transition-colors"
+                    className="text-gray-300 dark:text-dark-muted hover:text-red-500 transition-colors bg-white dark:bg-dark-surface p-2 rounded-lg"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
-              {categories.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted text-sm italic py-4">{lang === 'bn' ? 'কোন ক্যাটেগরি নেই' : 'No categories'}</p>}
+              {categories.length === 0 && <p className="text-center text-gray-400 dark:text-dark-muted text-sm italic py-10">{lang === 'bn' ? 'কোন ক্যাটেগরি নেই' : 'No categories'}</p>}
             </div>
 
             <ConfirmModal 

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../../lib/firebase';
+import { storage } from '../../firebase';
 import { Camera, X, Loader2, UploadCloud } from 'lucide-react';
 import { motion } from 'motion/react';
 
