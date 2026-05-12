@@ -45,7 +45,7 @@ function MobileNavItem({ active, onClick, icon, label }: { active: boolean, onCl
       }`}
     >
       {icon}
-      <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-tighter whitespace-nowrap">{label}</span>
+      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-tighter whitespace-nowrap">{label}</span>
     </button>
   );
 }

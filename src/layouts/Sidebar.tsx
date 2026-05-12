@@ -9,8 +9,7 @@ import {
   Users,
   BarChart3,
   Moon,
-  Sun,
-  Smartphone
+  Sun
 } from 'lucide-react';
 import { Language, translations } from '../utils/locales';
 

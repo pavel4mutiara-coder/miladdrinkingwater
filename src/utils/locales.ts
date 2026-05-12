@@ -133,6 +133,9 @@ export const translations = {
     noResults: "কোন ফলাফল পাওয়া যায়নি",
     all: "সবগুলো",
     maintenanceTrend: "মেরামত ব্যয়ের ট্রেন্ড",
+    addVehicleIncome: "গাড়ির ইনকাম যোগ করুন",
+    addVehicleRepair: "গাড়ির মেরামত ব্যয় যোগ করুন",
+    quickActions: "দ্রুত অ্যাকশন",
   },
   en: {
     appName: "Milad Drinking Water",
@@ -268,6 +271,9 @@ export const translations = {
     noResults: "No results found",
     all: "All",
     maintenanceTrend: "Maintenance Cost Trend",
+    addVehicleIncome: "Add Vehicle Income",
+    addVehicleRepair: "Add Vehicle Repair",
+    quickActions: "Quick Actions",
   }
 };
 

@@ -347,6 +347,31 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   </div>
                   <p className="text-gray-500 dark:text-dark-muted text-sm lg:text-base font-bold mb-4">{selectedVehicle.name} • {selectedVehicle.type}</p>
                   
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    <button 
+                      onClick={() => {
+                        window.dispatchEvent(new CustomEvent('trigger-add-log', { detail: { id: 'vehicle-income-section' } }));
+                        const incomeSection = document.getElementById('vehicle-income-section');
+                        incomeSection?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                    >
+                      <DollarSign size={16} />
+                      {t.addVehicleIncome}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        window.dispatchEvent(new CustomEvent('trigger-add-log', { detail: { id: 'vehicle-repair-section' } }));
+                        const repairSection = document.getElementById('vehicle-repair-section');
+                        repairSection?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 bg-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-600/20 active:scale-95 transition-all"
+                    >
+                      <Wrench size={16} />
+                      {t.addVehicleRepair}
+                    </button>
+                  </div>
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                      <div className="p-2 px-3 bg-gray-50 dark:bg-dark-bg rounded-xl border border-gray-100 dark:border-dark-border">
                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">{t.regNumber}</p>
@@ -373,6 +398,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
                <VehicleLogSection 
+                  id="vehicle-repair-section"
                   title={t.maintenanceCare} 
                   icon={<Wrench size={18} />} 
                   vehicleId={selectedVehicle.id} 
@@ -389,6 +415,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   ]}
                />
                <VehicleLogSection 
+                  id="vehicle-income-section"
                   title={t.dailyIncome} 
                   icon={<History size={18} />} 
                   vehicleId={selectedVehicle.id} 
@@ -726,13 +753,29 @@ function VehicleSummary({ vehicleId, lang }: { vehicleId: string, lang: Language
   );
 }
 
-function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lang, noDataMessage }: { title: string, icon: React.ReactNode, vehicleId: string, collectionName: string, fields: any[], lang: Language, noDataMessage?: string }) {
+function VehicleLogSection({ id, title, icon, vehicleId, collectionName, fields, lang, noDataMessage }: { id?: string, title: string, icon: React.ReactNode, vehicleId: string, collectionName: string, fields: any[], lang: Language, noDataMessage?: string }) {
   const t = translations[lang];
   const [logs, setLogs] = useState<any[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [newData, setNewData] = useState<any>({});
   const [localSearch, setLocalSearch] = useState('');
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+
+  useEffect(() => {
+    setShowAdd(false);
+    setNewData({ date: new Date().toISOString().split('T')[0] });
+  }, [vehicleId]);
+
+  useEffect(() => {
+    const handleTriggerAdd = (e: any) => {
+      if (e.detail?.id === id) {
+        setShowAdd(true);
+        setNewData({ date: new Date().toISOString().split('T')[0] });
+      }
+    };
+    window.addEventListener('trigger-add-log', handleTriggerAdd);
+    return () => window.removeEventListener('trigger-add-log', handleTriggerAdd);
+  }, [id]);
 
   useEffect(() => {
     // Simplified query to avoid composite index requirements
@@ -786,7 +829,7 @@ function VehicleLogSection({ title, icon, vehicleId, collectionName, fields, lan
   );
 
   return (
-    <div className="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border overflow-hidden shadow-sm flex flex-col">
+    <div id={id} className="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border overflow-hidden shadow-sm flex flex-col">
       <div className="p-4 lg:p-6 border-b border-gray-50 dark:border-dark-border flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50/30 dark:bg-dark-bg/30 gap-4">
         <div className="flex items-center gap-2">
            <span className="text-blue-500 dark:text-blue-400">{icon}</span>

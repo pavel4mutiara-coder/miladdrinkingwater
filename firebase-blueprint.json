@@ -117,9 +117,38 @@
         "cngNumber": { "type": "string" },
         "driverId": { "type": "string" },
         "dailyPayment": { "type": "number" },
+        "dueAmount": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["cngNumber", "driverId", "dailyPayment", "createdAt"]
+    },
+    "CNGIncome": {
+      "title": "CNG Income",
+      "description": "Daily payment received from a CNG rickshaw",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "cngId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "amount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["cngId", "date", "amount", "createdAt"]
+    },
+    "CNGExpense": {
+      "title": "CNG Expense",
+      "description": "Expenditure for a CNG rickshaw",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "cngId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "type": { "type": "string", "enum": ["Gas", "Repair", "Tire", "Battery", "Engine", "Other"] },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["cngId", "date", "type", "amount", "createdAt"]
     }
   },
   "firestore": {
@@ -160,11 +189,11 @@
       "description": "Collection of CNG rickshaws"
     },
     "cng_income": {
-      "schema": "object",
+      "schema": "CNGIncome",
       "description": "Daily income logs for CNG rickshaws"
     },
     "cng_expenses": {
-      "schema": "object",
+      "schema": "CNGExpense",
       "description": "Expense logs for CNG rickshaws"
     }
   }

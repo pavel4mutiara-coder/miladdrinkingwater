@@ -64,6 +64,14 @@ export default function App() {
     }
   });
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  
+  useEffect(() => {
+    const handleNav = (e: any) => {
+      if (e.detail) setActiveTab(e.detail);
+    };
+    window.addEventListener('nav-tab', handleNav);
+    return () => window.removeEventListener('nav-tab', handleNav);
+  }, []);
 
   useEffect(() => {
     try {

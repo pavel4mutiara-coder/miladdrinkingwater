@@ -80,6 +80,11 @@ export default function CNGManager({ lang }: CNGManagerProps) {
   }, []);
 
   useEffect(() => {
+    setIncomeForm({ amount: 0, date: getTodayString() });
+    setExpenseForm({ amount: 0, date: getTodayString(), type: 'Gas', description: '' });
+  }, [selectedCng]);
+
+  useEffect(() => {
     if (!selectedCng) return;
 
     const qInc = query(collection(db, 'cng_income'), where('cngId', '==', selectedCng.id));
@@ -475,6 +480,29 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                   </div>
                 </div>
 
+                <div className="flex flex-wrap gap-2 my-2 sm:my-0">
+                  <button 
+                    onClick={() => {
+                        const incomeSection = document.getElementById('cng-income-section');
+                        incomeSection?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                  >
+                    <Plus size={14} />
+                    {t.addVehicleIncome}
+                  </button>
+                  <button 
+                    onClick={() => {
+                        const expenseSection = document.getElementById('cng-expense-section');
+                        expenseSection?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-rose-600/20 active:scale-95 transition-all"
+                  >
+                    <Plus size={14} />
+                    {t.addVehicleRepair}
+                  </button>
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center">
                   <div className="flex gap-4">
                     <div className="flex-1 sm:text-right">
@@ -586,7 +614,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 {/* Income Section */}
-                <div className="space-y-6">
+                <div id="cng-income-section" className="space-y-6 scroll-mt-20">
                   <div className="flex items-center justify-between px-2">
                     <h3 className="font-black text-lg dark:text-white flex items-center gap-2">
                        <DollarSign className="text-green-500" size={20} /> {t.cngIncome}
@@ -636,7 +664,7 @@ export default function CNGManager({ lang }: CNGManagerProps) {
                 </div>
 
                 {/* Expense Section */}
-                <div className="space-y-6">
+                <div id="cng-expense-section" className="space-y-6 scroll-mt-20">
                   <div className="flex items-center justify-between px-2">
                     <h3 className="font-black text-lg dark:text-white flex items-center gap-2">
                        <TrendingUp className="text-red-500" size={20} /> {t.cngExpense}
