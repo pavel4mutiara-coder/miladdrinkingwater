@@ -40,6 +40,7 @@ import { Vehicle, Maintenance, VehicleIncome } from '../types';
 import { translations, Language } from '../utils/locales';
 import ImageUpload from '../components/ui/ImageUpload';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import MonthlyVehicleReportModal from '../components/MonthlyVehicleReportModal';
 
 export default function VehicleManager({ lang }: { lang: Language }) {
   const t = translations[lang];
@@ -55,6 +56,8 @@ export default function VehicleManager({ lang }: { lang: Language }) {
     id: null,
     type: 'vehicle'
   });
+  const [isMonthlyReportOpen, setIsMonthlyReportOpen] = useState(false);
+  const [activePrint, setActivePrint] = useState<'vehicle-card' | 'monthly-report' | null>('vehicle-card');
   const [newVehicle, setNewVehicle] = useState({ 
     vehicleNumber: '', 
     name: '', 
@@ -248,7 +251,7 @@ export default function VehicleManager({ lang }: { lang: Language }) {
           <div className="space-y-6 lg:space-y-8 pb-10">
             <div className="bg-white dark:bg-dark-surface p-6 lg:p-8 rounded-3xl border border-gray-100 dark:border-dark-border flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
                {/* Printable Vehicle Report (Hidden in UI, Visible in Print) */}
-               <div className="hidden print:block fixed inset-0 z-[9999] bg-white w-full h-full p-0 m-0">
+               <div className={`hidden ${activePrint === 'vehicle-card' ? 'print:block' : ''} fixed inset-0 z-[9999] bg-white w-full h-full p-0 m-0`}>
                   <div className="printable-document px-12 py-16">
                     <div className="flex justify-between items-start border-b-2 border-gray-100 pb-8 mb-10">
                       <div>
@@ -339,7 +342,10 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                       <h1 className="text-2xl lg:text-3xl font-black text-ink dark:text-white">{selectedVehicle.vehicleNumber}</h1>
                     </div>
                     <button 
-                      onClick={() => window.print()}
+                      onClick={() => {
+                        setActivePrint('vehicle-card');
+                        setTimeout(() => window.print(), 50);
+                      }}
                       className="p-3 bg-gray-50 dark:bg-dark-bg text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-2xl border border-gray-100 dark:border-dark-border transition-all active:scale-95"
                     >
                       <Printer size={20} />
@@ -369,6 +375,13 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                     >
                       <Wrench size={16} />
                       {t.addVehicleRepair}
+                    </button>
+                    <button 
+                      onClick={() => setIsMonthlyReportOpen(true)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 active:scale-95 transition-all mt-1"
+                    >
+                      <FileText size={16} />
+                      {lang === 'bn' ? 'মাসের সম্পূর্ণ আই-ব্যয় রিপোর্ট (PDF / WhatsApp)' : 'Monthly Finance Report (PDF / WhatsApp)'}
                     </button>
                   </div>
 
@@ -565,6 +578,21 @@ export default function VehicleManager({ lang }: { lang: Language }) {
         confirmText={t.delete}
         cancelText={t.close}
       />
+
+      {selectedVehicle && (
+        <MonthlyVehicleReportModal
+          isOpen={isMonthlyReportOpen}
+          onClose={() => {
+            setIsMonthlyReportOpen(false);
+            setActivePrint('vehicle-card');
+          }}
+          vehicle={selectedVehicle}
+          lang={lang}
+          onPreparePrint={(type) => {
+            setActivePrint(type === 'monthly' ? 'monthly-report' : 'vehicle-card');
+          }}
+        />
+      )}
     </div>
   );
 }
