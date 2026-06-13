@@ -419,12 +419,12 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   lang={lang}
                   noDataMessage={t.noMaintenanceRecord}
                   fields={[
-                    { name: 'date', label: t.date, type: 'date' },
-                    { name: 'mechanicName', label: t.mechanic, type: 'text' },
-                    { name: 'description', label: t.description, type: 'text' },
-                    { name: 'sparePartsCost', label: t.spareParts, type: 'number' },
-                    { name: 'cost', label: t.total, type: 'number' },
-                    { name: 'nextServiceDate', label: t.nextService, type: 'date' }
+                    { name: 'date', label: t.date, type: 'date', required: true },
+                    { name: 'mechanicName', label: t.mechanic, type: 'text', required: false },
+                    { name: 'description', label: t.description, type: 'text', required: true },
+                    { name: 'sparePartsCost', label: t.spareParts, type: 'number', required: false },
+                    { name: 'cost', label: t.total, type: 'number', required: true },
+                    { name: 'nextServiceDate', label: t.nextService, type: 'date', required: false }
                   ]}
                />
                <VehicleLogSection 
@@ -436,10 +436,10 @@ export default function VehicleManager({ lang }: { lang: Language }) {
                   lang={lang}
                   noDataMessage={t.noIncomeRecord}
                   fields={[
-                    { name: 'date', label: t.date, type: 'date' },
-                    { name: 'driverName', label: t.driverName, type: 'text' },
-                    { name: 'routeDetails', label: t.route, type: 'text' },
-                    { name: 'amount', label: t.amount, type: 'number' }
+                    { name: 'date', label: t.date, type: 'date', required: true },
+                    { name: 'driverName', label: t.driverName, type: 'text', required: false },
+                    { name: 'routeDetails', label: t.route, type: 'text', required: false },
+                    { name: 'amount', label: t.amount, type: 'number', required: true }
                   ]}
                />
             </div>
@@ -785,12 +785,14 @@ function VehicleLogSection({ id, title, icon, vehicleId, collectionName, fields,
   const t = translations[lang];
   const [logs, setLogs] = useState<any[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
   const [newData, setNewData] = useState<any>({});
   const [localSearch, setLocalSearch] = useState('');
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
 
   useEffect(() => {
     setShowAdd(false);
+    setEditingLogId(null);
     setNewData({ date: new Date().toISOString().split('T')[0] });
   }, [vehicleId]);
 
@@ -798,6 +800,7 @@ function VehicleLogSection({ id, title, icon, vehicleId, collectionName, fields,
     const handleTriggerAdd = (e: any) => {
       if (e.detail?.id === id) {
         setShowAdd(true);
+        setEditingLogId(null);
         setNewData({ date: new Date().toISOString().split('T')[0] });
       }
     };
@@ -826,18 +829,35 @@ function VehicleLogSection({ id, title, icon, vehicleId, collectionName, fields,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, collectionName), {
-        ...newData,
+      const parsedData = { ...newData };
+      delete parsedData.id;
+      delete parsedData.createdAt;
+      delete parsedData.updatedAt;
+
+      const payload = {
+        ...parsedData,
         vehicleId,
-        cost: newData.cost ? Number(newData.cost) : 0,
-        amount: newData.amount ? Number(newData.amount) : 0,
-        createdAt: serverTimestamp()
-      });
+        cost: parsedData.cost ? Number(parsedData.cost) : 0,
+        amount: parsedData.amount ? Number(parsedData.amount) : 0,
+      };
+
+      if (editingLogId) {
+        await updateDoc(doc(db, collectionName, editingLogId), {
+          ...payload,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        await addDoc(collection(db, collectionName), {
+          ...payload,
+          createdAt: serverTimestamp()
+        });
+      }
       setNewData({ date: new Date().toISOString().split('T')[0] });
+      setEditingLogId(null);
       setShowAdd(false);
     } catch (err) {
       alert(lang === 'bn' ? 'তথ্যাদি সেভ করতে সমস্যা হয়েছে।' : 'Failed to save record.');
-      handleFirestoreError(err, OperationType.CREATE, collectionName);
+      handleFirestoreError(err, editingLogId ? OperationType.UPDATE : OperationType.CREATE, collectionName);
     }
   };
 
@@ -875,9 +895,17 @@ function VehicleLogSection({ id, title, icon, vehicleId, collectionName, fields,
             />
           </div>
           <button 
+            type="button"
             onClick={() => {
-              setShowAdd(!showAdd);
-              if (!showAdd) setNewData({ date: new Date().toISOString().split('T')[0] });
+              if (showAdd) {
+                setShowAdd(false);
+                setEditingLogId(null);
+                setNewData({ date: new Date().toISOString().split('T')[0] });
+              } else {
+                setShowAdd(true);
+                setEditingLogId(null);
+                setNewData({ date: new Date().toISOString().split('T')[0] });
+              }
             }}
             className={`p-2 rounded-xl transition-all ${showAdd ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-500'}`}
           >
@@ -899,7 +927,7 @@ function VehicleLogSection({ id, title, icon, vehicleId, collectionName, fields,
               <div key={f.name} className={`space-y-1 ${f.name === 'description' || f.name === 'routeDetails' ? 'col-span-2 lg:col-span-1' : 'col-span-1'}`}>
                 <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block truncate">{f.label}</label>
                 <input 
-                   required
+                   required={f.required !== false}
                    type={f.type} 
                    value={newData[f.name] || ''} 
                    onChange={e => setNewData({...newData, [f.name]: e.target.value})} 
@@ -908,7 +936,9 @@ function VehicleLogSection({ id, title, icon, vehicleId, collectionName, fields,
               </div>
             ))}
             <div className="flex items-end col-span-2 lg:col-span-1">
-               <button className="w-full bg-ink dark:bg-blue-600 text-white py-2 lg:py-3 rounded-xl font-bold text-xs lg:text-sm shadow-lg shadow-blue-500/20">{t.save}</button>
+               <button className="w-full bg-ink dark:bg-blue-600 text-white py-2 lg:py-3 rounded-xl font-bold text-xs lg:text-sm shadow-lg shadow-blue-500/20">
+                 {editingLogId ? (lang === 'bn' ? 'হালনাগাদ করুন' : 'Update') : t.save}
+               </button>
             </div>
           </motion.form>
         )}
@@ -930,11 +960,25 @@ function VehicleLogSection({ id, title, icon, vehicleId, collectionName, fields,
                     {f.type === 'number' ? `৳${(log[f.name] || 0).toLocaleString()}` : log[f.name]}
                   </td>
                 ))}
-                <td className="px-4 lg:px-6 py-4 text-right">
+                <td className="px-4 lg:px-6 py-4 text-right flex items-center justify-end gap-2 whitespace-nowrap">
+                  <button 
+                    type="button"
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setEditingLogId(log.id);
+                      setNewData({ ...log });
+                      setShowAdd(true);
+                    }}
+                    className="text-gray-300 dark:text-dark-muted hover:text-blue-500 transition-all p-1"
+                    title={lang === 'bn' ? 'পরিবর্তন করুন' : 'Edit'}
+                  >
+                    <Edit2 size={14} />
+                  </button>
                   <button 
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setConfirmModal({ isOpen: true, id: log.id }); }}
                     className="text-gray-300 dark:text-dark-muted hover:text-red-500 transition-all p-1"
+                    title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -965,6 +1009,67 @@ function VehicleUnifiedHistory({ vehicleId, lang }: { vehicleId: string, lang: L
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [editingItem, setEditingItem] = useState<{ id: string; type: 'income' | 'maintenance'; data: any } | null>(null);
+  const [deleteItem, setDeleteItem] = useState<{ id: string; type: 'income' | 'maintenance' } | null>(null);
+
+  const handleDelete = async () => {
+    if (!deleteItem) return;
+    const { id, type } = deleteItem;
+    const collectionName = type === 'income' ? 'vehicle_income' : 'maintenance';
+    try {
+      await deleteDoc(doc(db, collectionName, id));
+      setDeleteItem(null);
+    } catch (err) {
+      alert(lang === 'bn' ? 'মুছে ফেলতে সমস্যা হয়েছে।' : 'Failed to delete record.');
+      handleFirestoreError(err, OperationType.DELETE, collectionName);
+    }
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    const { id, type, data } = editingItem;
+    const collectionName = type === 'income' ? 'vehicle_income' : 'maintenance';
+    try {
+      const parsedData = { ...data };
+      delete parsedData.id;
+      delete parsedData.createdAt;
+      delete parsedData.updatedAt;
+      delete parsedData.type;
+      delete parsedData.displayType;
+      delete parsedData.icon;
+
+      let payload: any = {};
+      if (type === 'income') {
+        payload = {
+          vehicleId: parsedData.vehicleId,
+          date: parsedData.date,
+          driverName: parsedData.driverName || '',
+          routeDetails: parsedData.routeDetails || '',
+          amount: parsedData.amount ? Number(parsedData.amount) : 0,
+        };
+      } else {
+        payload = {
+          vehicleId: parsedData.vehicleId,
+          date: parsedData.date,
+          mechanicName: parsedData.mechanicName || '',
+          description: parsedData.description || '',
+          sparePartsCost: parsedData.sparePartsCost ? Number(parsedData.sparePartsCost) : 0,
+          cost: parsedData.cost ? Number(parsedData.cost) : 0,
+          nextServiceDate: parsedData.nextServiceDate || '',
+        };
+      }
+
+      await updateDoc(doc(db, collectionName, id), {
+        ...payload,
+        updatedAt: serverTimestamp()
+      });
+      setEditingItem(null);
+    } catch (err) {
+      alert(lang === 'bn' ? 'তথ্যাদি সেভ করতে সমস্যা হয়েছে।' : 'Failed to save record.');
+      handleFirestoreError(err, OperationType.UPDATE, collectionName);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -1060,6 +1165,7 @@ function VehicleUnifiedHistory({ vehicleId, lang }: { vehicleId: string, lang: L
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest">{t.description}</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest">{lang === 'bn' ? 'সংশ্লিষ্ট ব্যক্তি' : 'Personnel'}</th>
                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right">{t.amount}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 dark:text-dark-muted uppercase tracking-widest text-right"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-dark-border">
@@ -1098,6 +1204,24 @@ function VehicleUnifiedHistory({ vehicleId, lang }: { vehicleId: string, lang: L
                       {item.type === 'income' ? '+' : '-'} ৳{(item.amount || item.cost || 0).toLocaleString()}
                     </span>
                   </td>
+                  <td className="px-6 py-4 text-right whitespace-nowrap flex items-center justify-end gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setEditingItem({ id: item.id, type: item.type, data: { ...item } })}
+                      className="text-gray-300 dark:text-dark-muted hover:text-blue-500 transition-all p-1"
+                      title={lang === 'bn' ? 'পরিবর্তন করুন' : 'Edit'}
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setDeleteItem({ id: item.id, type: item.type })}
+                      className="text-gray-300 dark:text-dark-muted hover:text-rose-500 transition-all p-1"
+                      title={lang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1109,6 +1233,199 @@ function VehicleUnifiedHistory({ vehicleId, lang }: { vehicleId: string, lang: L
           </div>
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={deleteItem !== null}
+        onClose={() => setDeleteItem(null)}
+        onConfirm={handleDelete}
+        title={t.confirmDelete}
+        message={lang === 'bn' ? 'আপনি কি নিশ্চিত যে আপনি এটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this record?'}
+        confirmText={t.delete}
+        cancelText={t.close}
+      />
+
+      <AnimatePresence>
+        {editingItem && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-dark-surface rounded-[24px] max-w-lg w-full shadow-2xl border border-gray-100 dark:border-dark-border overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 dark:border-dark-border flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-black uppercase text-blue-500 tracking-wider">
+                    {editingItem.type === 'income' ? (lang === 'bn' ? 'আয় সংশোধন' : 'Edit Income') : (lang === 'bn' ? 'ব্যয় সংশোধন' : 'Edit Expense')}
+                  </span>
+                  <h3 className="text-lg font-black dark:text-white">
+                    {lang === 'bn' ? 'লেনদেনের তথ্য পরিবর্তন করুন' : 'Update Transaction'}
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setEditingItem(null)}
+                  className="text-gray-400 hover:text-ink dark:hover:text-white bg-gray-100 dark:bg-dark-bg p-1.5 rounded-full transition-all"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdate} className="p-6 space-y-4">
+                {editingItem.type === 'income' ? (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.date}</label>
+                      <input 
+                        required
+                        type="date"
+                        value={editingItem.data.date || ''}
+                        onChange={e => setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, date: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.driverName}</label>
+                      <input 
+                        type="text"
+                        value={editingItem.data.driverName || ''}
+                        onChange={e => setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, driverName: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.route}</label>
+                      <input 
+                        type="text"
+                        value={editingItem.data.routeDetails || ''}
+                        onChange={e => setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, routeDetails: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.amount}</label>
+                      <input 
+                        required
+                        type="number"
+                        value={editingItem.data.amount || ''}
+                        onChange={e => setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, amount: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.date}</label>
+                      <input 
+                        required
+                        type="date"
+                        value={editingItem.data.date || ''}
+                        onChange={e => setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, date: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.mechanic}</label>
+                      <input 
+                        type="text"
+                        value={editingItem.data.mechanicName || ''}
+                        onChange={e => setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, mechanicName: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.description}</label>
+                      <input 
+                        required
+                        type="text"
+                        value={editingItem.data.description || ''}
+                        onChange={e => setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, description: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.spareParts}</label>
+                        <input 
+                          type="number"
+                          value={editingItem.data.sparePartsCost || ''}
+                          onChange={e => setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, sparePartsCost: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.total}</label>
+                        <input 
+                          required
+                          type="number"
+                          value={editingItem.data.cost || ''}
+                          onChange={e => setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, cost: e.target.value }
+                          })}
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 dark:text-dark-muted uppercase tracking-widest block">{t.nextService}</label>
+                      <input 
+                        type="date"
+                        value={editingItem.data.nextServiceDate || ''}
+                        onChange={e => setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, nextServiceDate: e.target.value }
+                        })}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-dark-bg border border-gray-150 dark:border-dark-border rounded-xl focus:outline-none focus:border-blue-500 text-sm dark:text-white"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex gap-3 justify-end pt-4 border-t border-gray-100 dark:border-dark-border">
+                  <button 
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="px-4 py-2 bg-gray-100 dark:bg-dark-border hover:bg-gray-200 text-gray-600 dark:text-white rounded-xl font-bold text-xs"
+                  >
+                    {t.close}
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-lg shadow-blue-500/15"
+                  >
+                    {lang === 'bn' ? 'হালনাগাদ করুন' : 'Update'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

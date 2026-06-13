@@ -9,7 +9,8 @@ import {
   Users, 
   Droplets,
   DollarSign,
-  Smartphone
+  Smartphone,
+  BarChart2
 } from 'lucide-react';
 import { translations, Language } from '../utils/locales';
 
@@ -30,11 +31,18 @@ export default function Dashboard({ lang }: { lang: Language }) {
     dailyWaterSales: 0,
     dailyOtherExpenses: 0,
     dailyCngIncome: 0,
-    dailyCngExpense: 0
+    dailyCngExpense: 0,
+    monthlyVehicleIncome: 0,
+    monthlyMaintenanceCost: 0,
+    monthlyWaterSales: 0,
+    monthlyOtherExpenses: 0,
+    monthlyCngIncome: 0,
+    monthlyCngExpense: 0
   });
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
+    const currentMonth = new Date().toISOString().substring(0, 7);
     let activeListeners = 0;
     const totalListeners = 8;
     
@@ -64,13 +72,20 @@ export default function Dashboard({ lang }: { lang: Language }) {
     const unsubIncome = onSnapshot(collection(db, 'vehicle_income'), (snap) => {
       let total = 0;
       let dailyTotal = 0;
+      let monthlyTotal = 0;
       snap.forEach(doc => {
         const data = doc.data();
         const amount = data.amount || 0;
         total += amount;
         if (data.date === today) dailyTotal += amount;
+        if (data.date && data.date.startsWith(currentMonth)) monthlyTotal += amount;
       });
-      setStats(prev => ({ ...prev, totalVehicleIncome: total, dailyVehicleIncome: dailyTotal }));
+      setStats(prev => ({ 
+        ...prev, 
+        totalVehicleIncome: total, 
+        dailyVehicleIncome: dailyTotal,
+        monthlyVehicleIncome: monthlyTotal 
+      }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -80,13 +95,20 @@ export default function Dashboard({ lang }: { lang: Language }) {
     const unsubMaintenance = onSnapshot(collection(db, 'maintenance'), (snap) => {
       let total = 0;
       let dailyTotal = 0;
+      let monthlyTotal = 0;
       snap.forEach(doc => {
         const data = doc.data();
         const cost = data.cost || 0;
         total += cost;
         if (data.date === today) dailyTotal += cost;
+        if (data.date && data.date.startsWith(currentMonth)) monthlyTotal += cost;
       });
-      setStats(prev => ({ ...prev, totalMaintenanceCost: total, dailyMaintenanceCost: dailyTotal }));
+      setStats(prev => ({ 
+        ...prev, 
+        totalMaintenanceCost: total, 
+        dailyMaintenanceCost: dailyTotal,
+        monthlyMaintenanceCost: monthlyTotal 
+      }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -96,13 +118,20 @@ export default function Dashboard({ lang }: { lang: Language }) {
     const unsubSales = onSnapshot(collection(db, 'water_sales'), (snap) => {
       let total = 0;
       let dailyTotal = 0;
+      let monthlyTotal = 0;
       snap.forEach(doc => {
         const data = doc.data();
         const amount = data.totalAmount || 0;
         total += amount;
         if (data.date === today) dailyTotal += amount;
+        if (data.date && data.date.startsWith(currentMonth)) monthlyTotal += amount;
       });
-      setStats(prev => ({ ...prev, totalDealerSales: total, dailyWaterSales: dailyTotal }));
+      setStats(prev => ({ 
+        ...prev, 
+        totalDealerSales: total, 
+        dailyWaterSales: dailyTotal,
+        monthlyWaterSales: monthlyTotal 
+      }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -112,13 +141,20 @@ export default function Dashboard({ lang }: { lang: Language }) {
     const unsubExpenses = onSnapshot(collection(db, 'company_expenses'), (snap) => {
       let total = 0;
       let dailyTotal = 0;
+      let monthlyTotal = 0;
       snap.forEach(doc => {
         const data = doc.data();
         const amount = data.amount || 0;
         total += amount;
         if (data.date === today) dailyTotal += amount;
+        if (data.date && data.date.startsWith(currentMonth)) monthlyTotal += amount;
       });
-      setStats(prev => ({ ...prev, totalExpenses: total, dailyOtherExpenses: dailyTotal }));
+      setStats(prev => ({ 
+        ...prev, 
+        totalExpenses: total, 
+        dailyOtherExpenses: dailyTotal,
+        monthlyOtherExpenses: monthlyTotal 
+      }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -128,13 +164,20 @@ export default function Dashboard({ lang }: { lang: Language }) {
     const unsubCngIncome = onSnapshot(collection(db, 'cng_income'), (snap) => {
       let total = 0;
       let dailyTotal = 0;
+      let monthlyTotal = 0;
       snap.forEach(doc => {
         const data = doc.data();
         const amount = data.amount || 0;
         total += amount;
         if (data.date === today) dailyTotal += amount;
+        if (data.date && data.date.startsWith(currentMonth)) monthlyTotal += amount;
       });
-      setStats(prev => ({ ...prev, totalCngIncome: total, dailyCngIncome: dailyTotal }));
+      setStats(prev => ({ 
+        ...prev, 
+        totalCngIncome: total, 
+        dailyCngIncome: dailyTotal,
+        monthlyCngIncome: monthlyTotal 
+      }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -144,13 +187,20 @@ export default function Dashboard({ lang }: { lang: Language }) {
     const unsubCngExpense = onSnapshot(collection(db, 'cng_expenses'), (snap) => {
       let total = 0;
       let dailyTotal = 0;
+      let monthlyTotal = 0;
       snap.forEach(doc => {
         const data = doc.data();
         const amount = data.amount || 0;
         total += amount;
         if (data.date === today) dailyTotal += amount;
+        if (data.date && data.date.startsWith(currentMonth)) monthlyTotal += amount;
       });
-      setStats(prev => ({ ...prev, totalCngExpense: total, dailyCngExpense: dailyTotal }));
+      setStats(prev => ({ 
+        ...prev, 
+        totalCngExpense: total, 
+        dailyCngExpense: dailyTotal,
+        monthlyCngExpense: monthlyTotal 
+      }));
       decrementLoading();
     }, (err) => {
       decrementLoading();
@@ -186,6 +236,10 @@ export default function Dashboard({ lang }: { lang: Language }) {
   const dailyWaterProfit = stats.dailyWaterSales - stats.dailyOtherExpenses;
   const dailyCngProfit = stats.dailyCngIncome - stats.dailyCngExpense;
   const totalDailyProfit = dailyVehicleProfit + dailyWaterProfit + dailyCngProfit;
+
+  const monthlyIncome = stats.monthlyVehicleIncome + stats.monthlyWaterSales + stats.monthlyCngIncome;
+  const monthlyExpenses = stats.monthlyMaintenanceCost + stats.monthlyOtherExpenses + stats.monthlyCngExpense;
+  const monthlyNetProfit = monthlyIncome - monthlyExpenses;
 
   return (
     <div className="space-y-6 lg:space-y-10 px-1 sm:px-0">
@@ -261,6 +315,74 @@ export default function Dashboard({ lang }: { lang: Language }) {
         </div>
       </section>
       
+      {/* --- Monthly Quick Stats Section --- */}
+      <section className="space-y-4 lg:space-y-6">
+        <div className="flex items-center gap-3 px-2 sm:px-0">
+           <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400"><BarChart2 size={18} /></div>
+           <h2 className="text-base sm:text-lg lg:text-xl font-bold dark:text-white uppercase tracking-wider">
+             {lang === 'bn' ? 'চলতি মাসের সংক্ষিপ্ত চিত্র' : 'Current Month Quick Stats'}
+           </h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
+           <motion.div 
+             whileHover={{ y: -3 }}
+             className="bg-white dark:bg-dark-surface p-6 rounded-[32px] border border-gray-100 dark:border-dark-border shadow-sm flex flex-col justify-between"
+           >
+              <div>
+                <p className="text-gray-400 dark:text-dark-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5 font-mono">
+                  {lang === 'bn' ? 'চলতি মাসের মোট আয়' : 'Monthly Income'}
+                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                    ৳{monthlyIncome.toLocaleString()}
+                  </p>
+                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl text-emerald-600 dark:text-emerald-400 shrink-0 shadow-sm">
+                    <TrendingUp size={20} />
+                  </div>
+                </div>
+              </div>
+           </motion.div>
+
+           <motion.div 
+             whileHover={{ y: -3 }}
+             className="bg-white dark:bg-dark-surface p-6 rounded-[32px] border border-gray-100 dark:border-dark-border shadow-sm flex flex-col justify-between"
+           >
+              <div>
+                <p className="text-gray-400 dark:text-dark-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5 font-mono">
+                  {lang === 'bn' ? 'চলতি মাসের মোট ব্যয়' : 'Monthly Expenses'}
+                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-2xl lg:text-3xl font-black text-rose-600 dark:text-rose-400 tracking-tight">
+                    ৳{monthlyExpenses.toLocaleString()}
+                  </p>
+                  <div className="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-2xl text-rose-600 dark:text-rose-400 shrink-0 shadow-sm">
+                    <TrendingDown size={20} />
+                  </div>
+                </div>
+              </div>
+           </motion.div>
+
+           <motion.div 
+             whileHover={{ y: -3 }}
+             className="bg-white dark:bg-dark-surface p-6 rounded-[32px] border border-gray-100 dark:border-dark-border shadow-sm flex flex-col justify-between"
+           >
+              <div>
+                <p className="text-gray-400 dark:text-dark-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1.5 font-mono">
+                  {lang === 'bn' ? 'চলতি মাসের নিট লাভ' : 'Monthly Net Profit'}
+                </p>
+                <div className="flex items-center justify-between">
+                  <p className={`text-2xl lg:text-3xl font-black tracking-tight ${monthlyNetProfit >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-rose-600'}`}>
+                    ৳{monthlyNetProfit.toLocaleString()}
+                  </p>
+                  <div className={`p-3 rounded-2xl shrink-0 shadow-sm ${monthlyNetProfit >= 0 ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' : 'bg-rose-50 dark:bg-rose-950/40 text-rose-600'}`}>
+                    <DollarSign size={20} />
+                  </div>
+                </div>
+              </div>
+           </motion.div>
+        </div>
+      </section>
+
       {/* --- Quick Actions Section --- */}
       <section className="space-y-4 lg:space-y-6">
         <div className="flex items-center gap-3 px-2 sm:px-0">

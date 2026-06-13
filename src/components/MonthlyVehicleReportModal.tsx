@@ -66,8 +66,14 @@ export default function MonthlyVehicleReportModal({
 
     setLoading(true);
 
+    const parts = selectedMonth.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const lastDay = new Date(year, month, 0).getDate();
+    const lastDayStr = String(lastDay).padStart(2, '0');
+
     const startStr = `${selectedMonth}-01`;
-    const endStr = `${selectedMonth}-31`; // Standard simple bounds query for month
+    const endStr = `${selectedMonth}-${lastDayStr}`; // Dynamically calculated end of month (covers entire calendar month perfectly)
 
     // Create listeners for vehicle_income
     const qIncome = query(

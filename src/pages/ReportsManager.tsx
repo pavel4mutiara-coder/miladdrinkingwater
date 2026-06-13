@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, where, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, where, Timestamp, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { motion } from 'motion/react';
 import { 
@@ -18,6 +18,7 @@ import { translations, Language } from '../utils/locales';
 export default function ReportsManager({ lang }: { lang: Language }) {
   const t = translations[lang];
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7)); // YYYY-MM
+  const [isExporting, setIsExporting] = useState(false);
   const [stats, setStats] = useState({
     vehicleIncome: 0,
     maintenanceCost: 0,
@@ -38,12 +39,17 @@ export default function ReportsManager({ lang }: { lang: Language }) {
       { name: 'company_expenses', field: 'amount', stateKey: 'otherExpense' }
     ];
 
+    const parts = selectedMonth.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const lastDay = new Date(year, month, 0).getDate();
+    const lastDayStr = String(lastDay).padStart(2, '0');
+
     const unsubscribes = collections.map(col => {
-      // Use inclusive ranges for the month; querying strings like '2023-01-01' to '2023-01-99' covers all days
       const q = query(
         collection(db, col.name), 
         where('date', '>=', `${selectedMonth}-01`), 
-        where('date', '<=', `${selectedMonth}-31`)
+        where('date', '<=', `${selectedMonth}-${lastDayStr}`)
       );
       return onSnapshot(q, (snap) => {
         let sum = 0;
@@ -65,6 +71,147 @@ export default function ReportsManager({ lang }: { lang: Language }) {
     window.print();
   };
 
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      const parts = selectedMonth.split('-');
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const lastDay = new Date(year, month, 0).getDate();
+      const lastDayStr = String(lastDay).padStart(2, '0');
+      const startRange = `${selectedMonth}-01`;
+      const endRange = `${selectedMonth}-${lastDayStr}`;
+
+      const collections = [
+        { name: 'vehicle_income', type: 'income', sourceLabelBn: 'গাড়ি ভাড়া আয়', sourceLabelEn: 'Vehicle Rent Income' },
+        { name: 'maintenance', type: 'expense', sourceLabelBn: 'গাড়ি মেরামত ব্যয়', sourceLabelEn: 'Vehicle Maintenance' },
+        { name: 'water_sales', type: 'income', sourceLabelBn: 'পানি বিক্রয় আয়', sourceLabelEn: 'Water Sales Income' },
+        { name: 'cng_income', type: 'income', sourceLabelBn: 'সিএনজি ইনকাম', sourceLabelEn: 'CNG Income' },
+        { name: 'cng_expenses', type: 'expense', sourceLabelBn: 'সিএনজি খরচ', sourceLabelEn: 'CNG Expense' },
+        { name: 'company_expenses', type: 'expense', sourceLabelBn: 'কোম্পানির অন্যান্য খরচ', sourceLabelEn: 'Company Other Expenses' }
+      ];
+
+      const allRecords: any[] = [];
+
+      // Fetch from all collections in parallel
+      await Promise.all(collections.map(async (col) => {
+        const q = query(
+          collection(db, col.name), 
+          where('date', '>=', startRange), 
+          where('date', '<=', endRange)
+        );
+        try {
+          const snap = await getDocs(q);
+          snap.forEach(docSnap => {
+            const data = docSnap.data();
+            let amount = 0;
+            let details = '';
+
+            if (col.name === 'vehicle_income') {
+              amount = data.amount || 0;
+              details = `${lang === 'bn' ? 'ড্রাইভার' : 'Driver'}: ${data.driverName || 'N/A'}, ${lang === 'bn' ? 'রুট' : 'Route'}: ${data.routeDetails || 'N/A'}`;
+            } else if (col.name === 'maintenance') {
+              amount = data.cost || 0;
+              details = `${lang === 'bn' ? 'মেকানিক' : 'Mechanic'}: ${data.mechanicName || 'N/A'}, ${lang === 'bn' ? 'বিবরণ' : 'Desc'}: ${data.description || 'N/A'}${data.sparePartsCost ? `, ${lang === 'bn' ? 'খুচরা পার্টস' : 'Spare Parts'}: ৳${data.sparePartsCost}` : ''}`;
+            } else if (col.name === 'water_sales') {
+              amount = data.totalAmount || 0;
+              details = `${lang === 'bn' ? 'পণ্য' : 'Product'}: ${data.productType || 'N/A'}, ${lang === 'bn' ? 'পরিমাণ' : 'Qty'}: ${data.quantity || 0}, ${lang === 'bn' ? 'দর' : 'Rate'}: ৳${data.unitPrice || 0}`;
+            } else if (col.name === 'cng_income') {
+              amount = data.amount || 0;
+              details = lang === 'bn' ? 'সিএনজি দৈনিক জমা' : 'CNG Daily Income';
+            } else if (col.name === 'cng_expenses') {
+              amount = data.amount || 0;
+              details = `${lang === 'bn' ? 'ধরণ' : 'Type'}: ${data.type || 'N/A'}, ${lang === 'bn' ? 'বিবরণ' : 'Desc'}: ${data.description || 'N/A'}`;
+            } else if (col.name === 'company_expenses') {
+              amount = data.amount || 0;
+              details = `${lang === 'bn' ? 'ক্যাটেগরি' : 'Category'}: ${data.category || 'N/A'}, ${lang === 'bn' ? 'বিবরণ' : 'Desc'}: ${data.description || 'N/A'}`;
+            }
+
+            allRecords.push({
+              date: data.date || '',
+              type: col.type,
+              typeLabel: col.type === 'income' ? (lang === 'bn' ? 'আয়' : 'Income') : (lang === 'bn' ? 'ব্যয়' : 'Expense'),
+              sourceLabel: lang === 'bn' ? col.sourceLabelBn : col.sourceLabelEn,
+              amount,
+              details
+            });
+          });
+        } catch (err) {
+          handleFirestoreError(err, OperationType.LIST, col.name);
+        }
+      }));
+
+      // Sort chronological by date
+      allRecords.sort((a, b) => a.date.localeCompare(b.date));
+
+      // Build CSV string
+      const escapeCSV = (val: any) => {
+        const str = String(val === null || val === undefined ? '' : val);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const headers = lang === 'bn'
+        ? ['তারিখ', 'ধরণ', 'উৎস', 'পরিমাণ (টাকা)', 'বিস্তারিত বিবরণ']
+        : ['Date', 'Type', 'Source', 'Amount (BDT)', 'Details'];
+
+      const csvRows = [];
+      csvRows.push(headers.map(escapeCSV).join(','));
+
+      allRecords.forEach(rec => {
+        csvRows.push([
+          rec.date,
+          rec.typeLabel,
+          rec.sourceLabel,
+          rec.amount,
+          rec.details
+        ].map(escapeCSV).join(','));
+      });
+
+      // Also append summary section at the bottom
+      csvRows.push('');
+      csvRows.push(lang === 'bn' ? ['সারসংক্ষেপ', '', '', '', ''] : ['Summary', '', '', '', '']);
+      csvRows.push([
+        lang === 'bn' ? 'মোট আয়' : 'Total Income',
+        '',
+        '',
+        totalIncome,
+        ''
+      ].map(escapeCSV).join(','));
+      csvRows.push([
+        lang === 'bn' ? 'মোট ব্যয়' : 'Total Expense',
+        '',
+        '',
+        totalExpense,
+        ''
+      ].map(escapeCSV).join(','));
+      csvRows.push([
+        lang === 'bn' ? 'নিট লাভ' : 'Net Profit',
+        '',
+        '',
+        netProfit,
+        ''
+      ].map(escapeCSV).join(','));
+
+      const csvContent = "\uFEFF" + csvRows.join('\n'); // Add BOM for Excel UTF-8 support
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Monthly_Report_${selectedMonth}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error(e);
+      alert(lang === 'bn' ? 'CSV এক্সপোর্ট করতে সমস্যা হয়েছে।' : 'Failed to export CSV.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-10 print:p-0">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 print:hidden">
@@ -82,6 +229,14 @@ export default function ReportsManager({ lang }: { lang: Language }) {
               className="w-full sm:w-auto pl-12 pr-4 py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold dark:text-white text-sm"
             />
           </div>
+          <button 
+            onClick={handleExportCSV}
+            disabled={isExporting}
+            className="flex items-center justify-center gap-2 px-6 py-4 sm:py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-2xl font-bold transition-all shadow-xl shadow-emerald-500/20 text-sm active:scale-95"
+          >
+            <Download size={18} />
+            {isExporting ? (lang === 'bn' ? 'ডাউনলোড হচ্ছে...' : 'Exporting...') : (lang === 'bn' ? 'CSV ডাউনলোড' : 'Export CSV')}
+          </button>
           <button 
             onClick={handlePrint}
             className="flex items-center justify-center gap-2 px-6 py-4 sm:py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 text-sm active:scale-95"
