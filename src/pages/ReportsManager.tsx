@@ -11,7 +11,8 @@ import {
   DollarSign,
   Calendar,
   Filter,
-  BarChart2
+  BarChart2,
+  Database
 } from 'lucide-react';
 import { translations, Language } from '../utils/locales';
 
@@ -19,6 +20,7 @@ export default function ReportsManager({ lang }: { lang: Language }) {
   const t = translations[lang];
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().substring(0, 7)); // YYYY-MM
   const [isExporting, setIsExporting] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
   const [stats, setStats] = useState({
     vehicleIncome: 0,
     maintenanceCost: 0,
@@ -69,6 +71,73 @@ export default function ReportsManager({ lang }: { lang: Language }) {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleBackupJSON = async () => {
+    setIsBackingUp(true);
+    try {
+      const collectionsToBackup = [
+        'vehicles',
+        'maintenance',
+        'drivers',
+        'cng_rickshaws',
+        'cng_income',
+        'cng_expenses',
+        'vehicle_income',
+        'dealers',
+        'water_sales',
+        'company_expenses',
+        'expense_categories'
+      ];
+      
+      const backupData: Record<string, any[]> = {};
+      
+      await Promise.all(collectionsToBackup.map(async (colName) => {
+        const q = collection(db, colName);
+        const snap = await getDocs(q);
+        const docsList: any[] = [];
+        snap.forEach(docSnap => {
+          const id = docSnap.id;
+          const data = docSnap.data();
+          
+          // Serialize fields, especially Timestamp ones
+          const serialized = { id };
+          for (const [key, val] of Object.entries(data)) {
+            if (val && typeof val === 'object') {
+              if (typeof (val as any).toDate === 'function') {
+                serialized[key] = (val as any).toDate().toISOString();
+              } else if ((val as any).seconds !== undefined) {
+                serialized[key] = new Date((val as any).seconds * 1000).toISOString();
+              } else {
+                serialized[key] = val;
+              }
+            } else {
+              serialized[key] = val;
+            }
+          }
+          docsList.push(serialized);
+        });
+        backupData[colName] = docsList;
+      }));
+
+      // Generate JSON backup file
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const todayStr = new Date().toISOString().split('T')[0];
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Database_Backup_${todayStr}.json`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error('Backup error:', e);
+      alert(lang === 'bn' ? 'ডাটাবেস ব্যাকআপ নিতে সমস্যা হয়েছে।' : 'Failed to export database backup.');
+    } finally {
+      setIsBackingUp(false);
+    }
   };
 
   const handleExportCSV = async () => {
@@ -229,6 +298,14 @@ export default function ReportsManager({ lang }: { lang: Language }) {
               className="w-full sm:w-auto pl-12 pr-4 py-3 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold dark:text-white text-sm"
             />
           </div>
+          <button 
+            onClick={handleBackupJSON}
+            disabled={isBackingUp}
+            className="flex items-center justify-center gap-2 px-6 py-4 sm:py-3 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-2xl font-bold transition-all shadow-xl shadow-amber-500/20 text-sm active:scale-95"
+          >
+            <Database size={18} />
+            {isBackingUp ? (lang === 'bn' ? 'ব্যাকআপ হচ্ছে...' : 'Backing up...') : (lang === 'bn' ? 'ডাটাবেস ব্যাকআপ' : 'DB Backup')}
+          </button>
           <button 
             onClick={handleExportCSV}
             disabled={isExporting}
